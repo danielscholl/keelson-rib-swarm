@@ -45,6 +45,14 @@
       "duration": 110
     },
     {
+      "fig": "02",
+      "title": "Read the cockpit",
+      "act": "I",
+      "problem": "Five agents talking at once is noise unless you can see who is doing what.",
+      "docs": ["guides/swarms-tab"],
+      "duration": 128
+    },
+    {
       "fig": "14",
       "title": "The software factory",
       "act": "IV",
