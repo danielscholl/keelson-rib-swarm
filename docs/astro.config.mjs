@@ -2,6 +2,7 @@
 import starlight from "@astrojs/starlight";
 import { defineConfig } from "astro/config";
 import starlightLlmsTxt from "starlight-llms-txt";
+import rehypeFilmRefs from "./src/lib/rehype-film-refs.ts";
 
 // Deploy defaults target this repo's GitHub Pages project URL
 // (https://danielscholl.github.io/keelson-rib-swarm/). For a custom domain, set
@@ -10,13 +11,19 @@ export default defineConfig({
   site: "https://danielscholl.github.io",
   base: "/keelson-rib-swarm",
   trailingSlash: "always",
+  markdown: {
+    rehypePlugins: [rehypeFilmRefs],
+  },
   integrations: [
     starlight({
       title: "Keelson Rib · Swarm",
       description:
         "Swarm as a Keelson rib: read-only agent swarms that coordinate over a ClickClack channel a human can watch, steer, and stop.",
       favicon: "/assets/keelson-mark.svg",
-      customCss: ["./src/styles/keelson-theme.css"],
+      customCss: ["./src/styles/keelson-theme.css", "./src/styles/films.css"],
+      components: {
+        PageTitle: "./src/components/PageTitle.astro",
+      },
       // Emits /llms.txt, /llms-full.txt, /llms-small.txt at build (llmstxt.org).
       plugins: [
         starlightLlmsTxt({
@@ -34,6 +41,7 @@ export default defineConfig({
       ],
       sidebar: [
         { label: "Overview", link: "/" },
+        { label: "Watch the series", link: "/watch/" },
         { label: "Concepts", items: [{ autogenerate: { directory: "concepts" } }] },
         { label: "Guides", items: [{ autogenerate: { directory: "guides" } }] },
         { label: "Tutorials", items: [{ autogenerate: { directory: "tutorials" } }] },

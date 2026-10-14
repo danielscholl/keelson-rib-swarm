@@ -1,6 +1,6 @@
 ---
 title: Decisions
-description: The shape of the problem the Chat rib solves, and the decisions it rests on.
+description: The shape of the problem the Swarm rib solves, and the decisions it rests on.
 sidebar:
   order: 2
 ---

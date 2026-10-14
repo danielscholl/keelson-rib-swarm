@@ -1,0 +1,57 @@
+---
+import Default from "@astrojs/starlight/components/PageTitle.astro";
+import { isWatchRoute, shortsForPage, watchHref } from "../lib/shorts";
+
+const route = Astro.locals.starlightRoute;
+const isFilmsPage = isWatchRoute(route.id);
+const hasFilms = !isFilmsPage && shortsForPage(route.id).length > 0;
+---
+
+{!isFilmsPage && <Default />}
+{
+  hasFilms && (
+    <dialog class="film-dialog" aria-labelledby="film-dialog-title">
+      <div class="film-dialog-head">
+        <span class="film-dialog-fig" />
+        <span id="film-dialog-title" class="film-dialog-title" />
+        <button type="button" class="film-dialog-close" aria-label="Close film">
+          ✕
+        </button>
+      </div>
+      <video controls playsinline preload="none" crossorigin="anonymous">
+        <track kind="captions" srclang="en" label="English" />
+      </video>
+      <a class="film-dialog-series" href={watchHref} data-watch={watchHref}>
+        Continue in the series →
+      </a>
+    </dialog>
+  )
+}
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>(".film-dialog");
+  const video = dialog?.querySelector("video");
+  if (dialog && video) {
+    const close = () => dialog.close();
+    for (const opener of document.querySelectorAll<HTMLButtonElement>("[data-film-open]")) {
+      opener.addEventListener("click", () => {
+        const d = opener.dataset;
+        dialog.querySelector(".film-dialog-fig")!.textContent = d.tag ?? "";
+        dialog.querySelector(".film-dialog-title")!.textContent = d.title ?? "";
+        const series = dialog.querySelector<HTMLAnchorElement>(".film-dialog-series")!;
+        series.href = `${series.dataset.watch}#${d.fig}`;
+        video.poster = d.poster ?? "";
+        video.src = d.video ?? "";
+        const track = video.querySelector("track");
+        if (track) track.src = d.captions ?? "";
+        dialog.showModal();
+        video.play().catch(() => {});
+      });
+    }
+    dialog.querySelector(".film-dialog-close")?.addEventListener("click", close);
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) close();
+    });
+    dialog.addEventListener("close", () => video.pause());
+  }
+</script>

@@ -1,6 +1,6 @@
 ---
 title: Guardrails
-description: What a message bus does not give you for free, and the limits the Chat rib adds in its place.
+description: What a message bus does not give you for free, and the limits the Swarm rib adds in its place.
 sidebar:
   order: 3
 ---

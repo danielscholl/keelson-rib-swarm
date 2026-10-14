@@ -1,0 +1,75 @@
+{
+  "base": "https://danielscholl.github.io/keelson-media/swarm/",
+  "series": {
+    "label": "DET.",
+    "prefix": "det",
+    "route": "",
+    "href": "/keelson-rib-swarm/",
+    "title": "Swarm, in detail",
+    "lede": "Short films that take a swarm apart, one part at a time."
+  },
+  "acts": [
+    {
+      "id": "I",
+      "title": "The crew",
+      "line": "What a swarm is, how to read one, and how big a team to field."
+    },
+    {
+      "id": "II",
+      "title": "The channel",
+      "line": "Who a message wakes, how you join in, and what agents read."
+    },
+    {
+      "id": "III",
+      "title": "The limits",
+      "line": "What stops a swarm, and what it costs."
+    },
+    {
+      "id": "IV",
+      "title": "Swarms that change code",
+      "line": "Writers in their own worktrees, a lead that runs workflows, and the factory."
+    },
+    {
+      "id": "Coda",
+      "title": "The design underneath",
+      "line": "Why a swarm is built on a chat server."
+    }
+  ],
+  "shorts": [
+    {
+      "fig": "01",
+      "title": "What a swarm is",
+      "act": "I",
+      "problem": "One agent on a big question answers alone, and you can't watch it think.",
+      "docs": ["concepts/agents-and-swarms", "concepts", "tutorials/your-first-swarm"],
+      "duration": 110
+    },
+    {
+      "fig": "02",
+      "title": "Read the cockpit",
+      "act": "I",
+      "problem": "Five agents talking at once is noise unless you can see who is doing what.",
+      "docs": ["guides/swarms-tab"],
+      "duration": 128
+    },
+    {
+      "fig": "03",
+      "title": "Scout, Crew, Fleet",
+      "act": "I",
+      "problem": "A bigger crew costs more, and not every question needs one.",
+      "docs": ["guides/run-a-swarm#start-it"],
+      "duration": 124
+    },
+    {
+      "fig": "14",
+      "title": "The software factory",
+      "act": "IV",
+      "problem": "Something has to work the board the way a team would, with someone else reading every change before it lands.",
+      "docs": ["concepts/budgets-and-stopping#factory-mode"],
+      "duration": 155,
+      "base": "https://danielscholl.github.io/keelson-media/",
+      "label": "FIG.",
+      "prefix": "fig"
+    }
+  ]
+}
