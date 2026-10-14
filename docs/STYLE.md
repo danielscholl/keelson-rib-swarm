@@ -126,8 +126,9 @@ one; `src/data/shorts.json` is the index.
 The film player is shared verbatim with keelson's docs: `lib/shorts.ts`,
 `lib/rehype-film-refs.ts`, `Short.astro`, `ShortLibrary.astro`, the
 `PageTitle.astro` dialog, and `styles/films.css`. Change them in keelson first
-and copy them across. What differs per site lives in `series` in
-`shorts.json`. A film borrowed from keelson's series (FIG. 14 here) sets its own
+and copy them across. This site's `shorts.json` holds the media base in the
+top-level `base`, its own `acts` and `shorts`, and the player settings in
+`series`. A film borrowed from keelson's series (FIG. 14 here) sets its own
 `base`, `label`, and `prefix`. The rest follows keelson's STYLE.md Video
 section: map films to pages in `shorts.json` rather than editing pages, keep
 one sidebar link to the Watch page, and never mark captions as default.
