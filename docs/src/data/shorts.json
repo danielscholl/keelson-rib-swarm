@@ -53,6 +53,14 @@
       "duration": 128
     },
     {
+      "fig": "03",
+      "title": "Scout, Crew, Fleet",
+      "act": "I",
+      "problem": "A bigger crew costs more, and not every question needs one.",
+      "docs": ["guides/run-a-swarm#start-it"],
+      "duration": 124
+    },
+    {
       "fig": "14",
       "title": "The software factory",
       "act": "IV",
