@@ -30,6 +30,7 @@ here is a bug, not a style choice.
 | Framework + versions | Astro Starlight, dependency versions pinned to keelson's (`@astrojs/starlight`, `astro`, `starlight-llms-txt`). Bump in lockstep with the harness site. |
 | IA tiers | The same five: `concepts`, `guides`, `tutorials`, `reference`, `design`. No new top-level tiers. |
 | `llms.txt` | `starlight-llms-txt` emits `/llms.txt`, `/llms-full.txt`, `/llms-small.txt` at build. |
+| Film player | The shared film files listed under Video are copies of keelson's and stay identical. |
 | CI | `docs.yml` builds on `docs/**` push and PR (validation) and deploys from `main`. The Bun version is pinned to the same release `ci.yml` validates against. |
 | Tooling fences | `biome.json` ignores `docs` (the Astro project is checked by `astro check`, not biome). `.gitignore` ignores `.astro/`. |
 
@@ -76,8 +77,9 @@ Same tiers as keelson, aimed at the concrete rib. The Swarm rib's framing:
   real issue with snapshotted evidence).
 - **`reference/`** — the contract tier for *this* rib: its `chat_*` tools and
   their inputs, the `chat-swarm` workflow, limits and statuses, and
-  configuration. Terse and precise, like keelson's reference pages. The Swarm rib
-  publishes no surface and no snapshot keys, so there is no surface page.
+  configuration. Terse and precise, like keelson's reference pages. The Swarms
+  surface and its `rib:swarm:*` snapshot keys are covered by the Swarms tab
+  guide rather than a separate surface page.
 - **`design/`** — decision records and what is deferred. The right home for
   design narrative the source comment policy keeps out of code.
 
@@ -113,6 +115,23 @@ dark `screenshot-figure` frame for app screenshots and the light
 There is **no `Figure` component to author.** Figures are native Markdown
 `<figure>` / `<figcaption>`, styled by the inherited `keelson-theme.css`. Write
 them directly; the frame and caption styling come for free.
+
+## Video
+
+The Swarm rib has its own film series, the detail sheets (`DET. 01` onward),
+which zoom in on the parts of a swarm that keelson's FIG. 14 shows whole. The
+films live in the keelson-media repository under `media/swarm/`, never in this
+one; `src/data/shorts.json` is the index.
+
+The film player is shared verbatim with keelson's docs: `lib/shorts.ts`,
+`lib/rehype-film-refs.ts`, `Short.astro`, `ShortLibrary.astro`, the
+`PageTitle.astro` dialog, and `styles/films.css`. Change them in keelson first
+and copy them across. This site's `shorts.json` holds the media base in the
+top-level `base`, its own `acts` and `shorts`, and the player settings in
+`series`. A film borrowed from keelson's series (FIG. 14 here) sets its own
+`base`, `label`, and `prefix`. The rest follows keelson's STYLE.md Video
+section: map films to pages in `shorts.json` rather than editing pages, keep
+one sidebar link to the Watch page, and never mark captions as default.
 
 ## Attribution is part of the docs pattern
 

@@ -1,6 +1,6 @@
 ---
 title: Deferred
-description: What the Chat rib does not do yet, and what each item is waiting on.
+description: What the Swarm rib does not do yet, and what each item is waiting on.
 sidebar:
   order: 4
 ---
