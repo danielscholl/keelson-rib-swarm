@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.0](https://github.com/danielscholl/keelson-rib-swarm/compare/v0.29.0...v0.30.0) (2026-10-19)
+
+
+### Added
+
+* **docs:** play the swarm detail films in the docs ([#149](https://github.com/danielscholl/keelson-rib-swarm/issues/149)) ([cca03b4](https://github.com/danielscholl/keelson-rib-swarm/commit/cca03b47d808be3ff6ff11ae9e54765b3646621c))
+
 ## [0.29.0](https://github.com/danielscholl/keelson-rib-swarm/compare/v0.28.0...v0.29.0) (2026-10-09)
 
 
