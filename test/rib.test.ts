@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { ribIdSchema } from "@keelson/shared";
+import { historyPath, loadHistory } from "../src/history.ts";
 import rib from "../src/index.ts";
 import { AGENT_TOOLS, DIFF_TOOL, DISPATCH_TOOLS, MERGE_TOOL, PR_TOOL } from "../src/swarm.ts";
 import { POWER_EFFORT, SIZE_PRESETS } from "../src/types.ts";
@@ -290,6 +291,59 @@ describe("rib contract", () => {
     } finally {
       restore(saved);
       await rib.dispose?.();
+    }
+  });
+
+  test("history held only in memory does not leak into a data dir registered later", async () => {
+    const saved = {
+      CLICKCLACK_URL: process.env.CLICKCLACK_URL,
+      CLICKCLACK_TOKEN: process.env.CLICKCLACK_TOKEN,
+      CLICKCLACK_WORKSPACE: process.env.CLICKCLACK_WORKSPACE,
+    };
+    process.env.CLICKCLACK_URL = "http://127.0.0.1:1";
+    process.env.CLICKCLACK_TOKEN = "sst_unused";
+    process.env.CLICKCLACK_WORKSPACE = "wsp_pinned";
+    const dir = mkdtempSync(join(tmpdir(), "swarm-history-dir-"));
+    // A failed start records its summary after the tool returns, so wait for it before disposing.
+    const startFailing = async (task: string, getDataDir?: () => string) => {
+      const tools =
+        rib.registerTools?.({
+          getExec: () => ({}) as never,
+          getDataDir,
+          runAgentTurn: (() => {
+            throw new Error("no turn should run");
+          }) as never,
+          registerOp: (() => {
+            throw new Error("no op should be registered");
+          }) as never,
+        }) ?? [];
+      const run = async (name: string, input: Record<string, unknown>) => {
+        let text = "";
+        await tools
+          .find((t) => t.name === name)
+          ?.execute(input, {
+            cwd: "/",
+            abortSignal: new AbortController().signal,
+            emit: (chunk) => {
+              if (chunk.type === "tool_result") text = chunk.content;
+            },
+          });
+        return text;
+      };
+      await run("chat_swarm_start", { task });
+      for (let i = 0; i < 100 && !(await run("chat_swarm_status", {})).includes(task); i++) {
+        await Bun.sleep(5);
+      }
+      await rib.dispose?.();
+    };
+    try {
+      await startFailing("memory only");
+      await startFailing("on disk", () => dir);
+      expect(loadHistory(historyPath(dir)).ended.map((s) => s.task)).toEqual(["on disk"]);
+    } finally {
+      restore(saved);
+      await rib.dispose?.();
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 });
