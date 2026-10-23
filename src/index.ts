@@ -95,6 +95,8 @@ const booting = new Map<string, Swarm>();
 const serialByProject = new Map<string, WorkflowDispatcher["start"]>();
 const ended = new Map<string, SwarmSummary>();
 const refusedApprovals = new Set<string>();
+// The data dir the two above were loaded from; undefined while they live only in memory.
+let historyDir: string | undefined;
 const approvalRefusals: ApprovalRefusals = {
   has: (workflow) => refusedApprovals.has(workflow),
   set: (workflow, refused) => {
@@ -802,10 +804,13 @@ const rib: Rib = {
     serialByProject.clear();
     disposed = false;
     const dir = getDataDir?.();
-    if (dir && ended.size === 0) {
+    if (dir && dir !== historyDir) {
+      ended.clear();
+      refusedApprovals.clear();
       const history = loadHistory(historyPath(dir));
       for (const summary of history.ended.slice(-ENDED_KEPT)) ended.set(summary.id, summary);
       for (const workflow of history.refusedApprovals) refusedApprovals.add(workflow);
+      historyDir = dir;
     }
     const sm = ctx.getSnapshotManager?.();
     if (sm && !surface) {
@@ -892,6 +897,7 @@ const rib: Rib = {
     if (getDataDir?.()) {
       ended.clear();
       refusedApprovals.clear();
+      historyDir = undefined;
     }
     await server?.dispose().catch(() => undefined);
     server = undefined;
