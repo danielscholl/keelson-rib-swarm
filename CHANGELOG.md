@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.1](https://github.com/danielscholl/keelson-rib-swarm/compare/v0.30.0...v0.30.1) (2026-10-23)
+
+
+### Fixed
+
+* **swarms:** keep swarm history with the data dir it was loaded from ([#153](https://github.com/danielscholl/keelson-rib-swarm/issues/153)) ([6b641c1](https://github.com/danielscholl/keelson-rib-swarm/commit/6b641c1e1352a1d4532250a5601b48aa7a0c2217))
+
 ## [0.30.0](https://github.com/danielscholl/keelson-rib-swarm/compare/v0.29.0...v0.30.0) (2026-10-19)
 
 
