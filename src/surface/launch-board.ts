@@ -76,7 +76,7 @@ export function modelField(model?: string, provider?: string): Field {
 const PLANS = [
   {
     name: PLAN_NAME.small,
-    blurb: "A narrow question, or a first pass before a bigger run.",
+    blurb: "A narrow question, or a first pass.",
     size: "small",
     power: "fast",
   },

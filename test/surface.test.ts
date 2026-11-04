@@ -753,6 +753,12 @@ describe("message lines", () => {
     expect(messageLine("s1", "keys DEFINITIVE (my error)", 120, "keys")).toBe(
       "DEFINITIVE (my error)",
     );
+    expect(messageLine("s1", "keys, authoritative and last", 120, "keys")).toBe(
+      "authoritative and last",
+    );
+    expect(messageLine("s1", "Rounding seam. I disagree", 120, "rounding")).toBe(
+      "Rounding seam. I disagree",
+    );
     expect(messageLine("s1", "keys' latest word is long", 120, "metrics")).toBe(
       "keys' latest word is long",
     );
@@ -12054,7 +12060,7 @@ describe("launching from the tab", () => {
         ">Task<",
         ">Size<",
         "Scout",
-        "A narrow question, or a first pass before a bigger run.",
+        "A narrow question, or a first pass.",
         "Crew",
         "Most tasks: investigate, debate, and decide.",
         "Fleet",

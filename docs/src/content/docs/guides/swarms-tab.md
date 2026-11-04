@@ -737,7 +737,7 @@ class model.
 
 | Plan | For | Agents | Turns | Minutes |
 | --- | --- | --- | --- | --- |
-| Scout | A narrow question, or a first pass before a bigger run. | 3 | 20 | 15 |
+| Scout | A narrow question, or a first pass. | 3 | 20 | 15 |
 | Crew | Most tasks: investigate, debate, and decide. | 5 | 40 | 30 |
 | Fleet | Wide or hard problems that are worth the spend. | 8 | 80 | 60 |
 

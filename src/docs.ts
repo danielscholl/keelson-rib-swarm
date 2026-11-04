@@ -953,7 +953,7 @@ they name the same model. Providers without pins use the matching class model.
 
 | Plan | For | Agents | Turns | Minutes |
 | --- | --- | --- | --- | --- |
-| Scout | A narrow question, or a first pass before a bigger run. | ${SIZE_PRESETS.small.maxAgents} | ${SIZE_PRESETS.small.maxTurns} | ${minutes(SIZE_PRESETS.small.wallClockMs)} |
+| Scout | A narrow question, or a first pass. | ${SIZE_PRESETS.small.maxAgents} | ${SIZE_PRESETS.small.maxTurns} | ${minutes(SIZE_PRESETS.small.wallClockMs)} |
 | Crew | Most tasks: investigate, debate, and decide. | ${SIZE_PRESETS.medium.maxAgents} | ${SIZE_PRESETS.medium.maxTurns} | ${minutes(SIZE_PRESETS.medium.wallClockMs)} |
 | Fleet | Wide or hard problems that are worth the spend. | ${SIZE_PRESETS.large.maxAgents} | ${SIZE_PRESETS.large.maxTurns} | ${minutes(SIZE_PRESETS.large.wallClockMs)} |
 

@@ -1195,7 +1195,6 @@ function reportKb(s: SwarmSummary): string {
 export const openReport = (s: SwarmSummary) => ({
   type: "open-report",
   label: "Open the report",
-  glyph: "◧",
   tone: "brand" as const,
   payload: { id: s.id },
 });

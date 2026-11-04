@@ -89,7 +89,6 @@ function reportAction(s: SwarmSummary) {
         {
           type: "open-report",
           label: "Report",
-          glyph: "◧",
           payload: { id: s.id },
           hint: s.report.title,
         },

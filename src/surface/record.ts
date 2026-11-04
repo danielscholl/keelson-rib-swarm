@@ -176,11 +176,12 @@ svg .endrule { stroke: var(--muted); stroke-width: 1; }
 svg .lbl { font-size: 11.5px; fill: var(--fg); }
 svg .mk text { font-size: 12px; fill: var(--fg-strong); text-anchor: middle;
   paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }
+svg .mk .big { font-size: 17px; }
 svg .hatch { fill: url(#hatch); }
 svg .hatchline { stroke: var(--crit); stroke-width: 1.2; }
 svg .open { stroke: var(--fg); stroke-dasharray: 2 2; stroke-width: 1; }
 svg .edge { stroke: var(--muted); fill: none; opacity: .75; }
-svg .spawn { opacity: .55; }
+svg .spawn { opacity: .75; }
 svg .asked { stroke-dasharray: 4 3; }
 svg .arrow { fill: var(--muted); }
 svg .node { fill: var(--card); stroke-width: 1.5; }
@@ -454,7 +455,7 @@ export function buildTimelineModel(s: SwarmSummary): {
 
 function mark(x: number, y: number, glyph: string, title: string, descriptionId?: string): string {
   if (!ok(x, y)) return "";
-  return `<text x="${num(x)}" y="${num(y)}"${descriptionId ? ` aria-describedby="${descriptionId}"` : ""}><title>${esc(cut(title, 40))}</title>${glyph}</text>`;
+  return `<text x="${num(x)}" y="${num(y)}"${glyph === "▪" ? ' class="big"' : ""}${descriptionId ? ` aria-describedby="${descriptionId}"` : ""}><title>${esc(cut(title, 40))}</title>${glyph}</text>`;
 }
 
 function timeline(s: SwarmSummary, composedAt: Date): string {
@@ -527,7 +528,7 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
     // A spawn mark sits just before the first turn, which usually starts at once.
     let x = xOf(f, when(m.at)) - (m.glyph === "○" ? 8 : 0);
     const row = taken.get(i) ?? [];
-    while (row.some((held) => Math.abs(held - x) < 9)) x -= 10;
+    while (row.some((held) => Math.abs(held - x) < 12)) x += 13;
     row.push(x);
     taken.set(i, row);
     marks.push(mark(x, mid(i), m.glyph, m.title, m.descriptionId));
@@ -570,8 +571,8 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
 
 function graphNote(graphEdges: readonly AgentEdge[]): string {
   return [
-    "Straight arrows are spawns, counting the parent's later wakes of that agent.",
-    "Curves count the turns one agent's messages or run updates started, each count by its arrowhead; ⇄ means the same both ways.",
+    "Straight arrows are spawns; the count beside one is the parent's later wakes.",
+    "Curves count the turns one agent started in another, beside the arrowhead; ⇄ means the same both ways.",
     ...(graphEdges.some((e) => e.kind === "asked") ? ["A dashed curve is a question to you."] : []),
     "Kickoff and idle nudges are left out.",
   ].join(" ");

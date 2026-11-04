@@ -146,8 +146,12 @@ export function messageLine(swarmId: string, text: string, max = 120, author?: s
   let line = firstLine(plain(activityText(swarmId, text)), 1000)
     .replace(/\s*\(?\bmsg_[a-z0-9]+\)?/gi, "")
     .replace(/^(?:@[\w.-]+[,:]?\s+)+/, "");
-  const self = author ? line.match(/^@?([\w.-]+?)(?:'s?)?(?::\s+|\s+)/) : null;
-  if (self && self[1]?.toLowerCase() === author?.toLowerCase()) line = line.slice(self[0].length);
+  const label = author ? line.match(/^@?([\w.-]+?)(?:[:,]|'s?)\s+/) : null;
+  const bare = author ? line.match(/^@?([\w.-]+)\s+/) : null;
+  // A bare opening word counts only in the author's own casing, so "Rounding seam" stays whole.
+  if (label && label[1]?.toLowerCase() === author?.toLowerCase())
+    line = line.slice(label[0].length);
+  else if (bare && bare[1] === author) line = line.slice(bare[0].length);
   if (line.length <= max) return line;
   const cut = line.slice(0, max - 1);
   const space = cut.lastIndexOf(" ");

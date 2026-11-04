@@ -329,7 +329,7 @@ describe("contributed docs", () => {
       ])
         expect(text).toContain(phrase);
       for (const [name, size, blurb] of [
-        ["Scout", "small", "A narrow question, or a first pass before a bigger run."],
+        ["Scout", "small", "A narrow question, or a first pass."],
         ["Crew", "medium", "Most tasks: investigate, debate, and decide."],
         ["Fleet", "large", "Wide or hard problems that are worth the spend."],
       ] as const) {
