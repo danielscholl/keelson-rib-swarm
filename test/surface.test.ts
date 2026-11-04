@@ -4637,7 +4637,7 @@ describe("the details", () => {
     );
     const cards = bench?.kind === "cards" ? bench.items : [];
     expect(cards[0]?.footnote).toBe(`last: spawned @w1: reads logs · ${hhmm(at(1))}`);
-    expect(cards[1]?.footnote).toBe(`last: turn 1 ok · 42 s · 1 new · ${hhmm(at(2))}`);
+    expect(cards[1]?.footnote).toBe(`last turn ${hhmm(at(2))}`);
   });
 
   test("an answered approval names its reviewer and discloses the reason", () => {

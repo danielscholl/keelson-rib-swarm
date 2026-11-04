@@ -605,7 +605,7 @@ function agentCard(
   const foot = [
     ...(last
       ? [
-          /^turn \d+ /.test(last.text)
+          /^turn \d+ /.test(actorText(s.id, last.text, a.id))
             ? `last turn ${hhmm(last.at)}`
             : `last: ${firstLine(actorText(s.id, last.text, a.id), 40)} · ${hhmm(last.at)}`,
         ]
