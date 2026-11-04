@@ -763,7 +763,7 @@ It retains the numeric used count and existing sparkline.
 
 Conversation shows the eight newest channel messages, newest first. Each row
 carries its author's short handle in an identity-colored chip (you for the
-operator), ↳ on a reply, and its HH:MM time. Rows are plain text; the final
+operator), ↳ on a reply, and its HH:MM time. Rows are plain text, without leading @addresses or message ids, cut at a word; the final
 count line links the transcript. The rib keeps only the newest 20 messages and their
 first 200 characters; the row shows the first line, at most 90 characters, as
 plain field text. Emphasis and code marks come off; HTML and markdown links stay

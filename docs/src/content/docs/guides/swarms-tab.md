@@ -285,7 +285,8 @@ It retains the numeric used count and existing sparkline.
 - **Conversation** shows at most eight rows, newest first. Each has the
   author's short handle in its identity color, or neutral **you** for an
   operator post; a reply starts with **↳**. Its **HH:MM** time sits at the
-  end. Rows are plain text. The final row reads **23 messages ·
+  end. Rows are plain text, without leading @addresses or message ids, cut
+  at a word. The final row reads **23 messages ·
   transcript ↗**, using the swarm's count and linking the channel.
 
 The rib keeps only the newest 20 messages, oldest first, and the first

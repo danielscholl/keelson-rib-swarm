@@ -738,7 +738,10 @@ describe("message lines", () => {
     expect(messageLine("s1", `${text} **bold** __under__ \`code\`\nsecond line`)).toBe(
       `${text} bold under code`,
     );
-    expect(messageLine("s1", "@s1-lead asked @s1-w")).toBe("@lead asked @w");
+    expect(messageLine("s1", "ask @s1-lead about @s1-w")).toBe("ask @lead about @w");
+    expect(messageLine("s1", "@s1-lead @s1-w Final per keys (msg_01abc9): prefix sf")).toBe(
+      "Final per keys: prefix sf",
+    );
     expect(messageLine("s1", "x".repeat(100))).toBe(`${"x".repeat(89)}…`);
     expect(messageLine("s1", "x".repeat(20), 10)).toBe(`${"x".repeat(9)}…`);
   });

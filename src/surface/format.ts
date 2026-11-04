@@ -136,8 +136,15 @@ export function activityText(swarmId: string, text: string): string {
 }
 
 // Field text renders as is: links and HTML stay literal, not clickable markup.
+// A preview row: no leading @addresses or message ids, cut at a word.
 export function messageLine(swarmId: string, text: string, max = 90): string {
-  return firstLine(plain(activityText(swarmId, text)), max);
+  const line = firstLine(plain(activityText(swarmId, text)), 1000)
+    .replace(/\s*\(?\bmsg_[a-z0-9]+\)?/gi, "")
+    .replace(/^(?:@[\w.-]+[,:]?\s+)+/, "");
+  if (line.length <= max) return line;
+  const cut = line.slice(0, max - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, "")}…`;
 }
 
 // An activity line under its actor's chip: the handle or "you" it starts with

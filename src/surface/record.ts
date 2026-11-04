@@ -187,7 +187,7 @@ svg .count { font-size: 10.5px; fill: var(--muted);
 .who i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 7px; }
 .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--card-2); }
 .bar i { display: block; height: 100%; }
-.bar .fresh { background: currentColor; } .bar .cached { background: currentColor; opacity: .35; }
+.bar .fresh { background: currentColor; } .bar .cached { background: currentColor; opacity: .5; }
 .run { border: 1px solid var(--border); border-radius: 10px; background: var(--card-2); padding: 12px 14px; margin: 0 0 10px; }
 .run dl { display: grid; grid-template-columns: 88px 1fr; gap: 2px 10px; margin: 6px 0 0; font-size: 12.5px; }
 .run dt { color: var(--muted); } .run dd { margin: 0; overflow-wrap: anywhere; }
