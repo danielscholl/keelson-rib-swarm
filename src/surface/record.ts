@@ -580,11 +580,11 @@ function graphNote(graphEdges: readonly AgentEdge[]): string {
 // A spawn count beside its line, pushed off it along the normal so the line never strikes it.
 function spawnLabel(x1: number, y1: number, x2: number, y2: number, label: string): string {
   const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-  const side = x2 >= x1 ? 1 : -1;
+  const side = x2 >= x1 ? -1 : 1;
   const nx = (side * (y2 - y1)) / len;
   const ny = (-side * (x2 - x1)) / len;
-  const x = x1 + (x2 - x1) * 0.8 + nx * 11;
-  const y = y1 + (y2 - y1) * 0.8 + ny * 11 + 3.5;
+  const x = x1 + (x2 - x1) * 0.6 + nx * 11;
+  const y = y1 + (y2 - y1) * 0.6 + ny * 11 + 3.5;
   return `<text class="count" x="${num(x)}" y="${num(y)}" text-anchor="middle">${label}</text>`;
 }
 
@@ -927,7 +927,7 @@ function headerCost(s: SwarmSummary): string[] {
 function header(s: SwarmSummary): string {
   const line = firstLine(s.task, 1000);
   const head = taskHead(s.task, 200);
-  const rest = head.endsWith("…") ? "" : line.slice(head.length).trim();
+  const rest = head.endsWith("…") ? "" : line.slice(head.length).replace(/^\./, "").trim();
   const took = span(s.startedAt, s.endedAt);
   const facts = [
     LIFECYCLE[s.status].label,

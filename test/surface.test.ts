@@ -6084,6 +6084,17 @@ describe("the record page", () => {
     }
   });
 
+  test("the record heads with the task's first sentence and keeps the rest below it", () => {
+    const s = swarm("slede", {
+      status: "done",
+      endedAt: at(5),
+      task: "Review the cart module and propose three fixes. Each worker takes one.",
+    });
+    const html = buildRecord(s, new Date(at(6)));
+    expect(html).toContain("<h1>Review the cart module and propose three fixes</h1>");
+    expect(html).toContain('<p class="lede">Each worker takes one.</p>');
+  });
+
   test.each([12, 13])(
     "the native timeline bounds %i lanes including the operator and runs",
     (count) => {
