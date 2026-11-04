@@ -580,7 +580,7 @@ function graphNote(graphEdges: readonly AgentEdge[]): string {
 // A spawn count beside its line, pushed off it along the normal so the line never strikes it.
 function spawnLabel(x1: number, y1: number, x2: number, y2: number, label: string): string {
   const len = Math.hypot(x2 - x1, y2 - y1) || 1;
-  const side = x2 >= x1 ? -1 : 1;
+  const side = Math.abs(x2 - x1) < 1 ? 1 : x2 > x1 ? -1 : 1;
   const nx = (side * (y2 - y1)) / len;
   const ny = (-side * (x2 - x1)) / len;
   const x = x1 + (x2 - x1) * 0.6 + nx * 11;
