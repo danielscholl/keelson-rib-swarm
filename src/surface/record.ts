@@ -180,7 +180,7 @@ svg .hatch { fill: url(#hatch); }
 svg .hatchline { stroke: var(--crit); stroke-width: 1.2; }
 svg .open { stroke: var(--fg); stroke-dasharray: 2 2; stroke-width: 1; }
 svg .edge { stroke: var(--muted); fill: none; opacity: .75; }
-svg .spawn { opacity: .4; }
+svg .spawn { opacity: .55; }
 svg .asked { stroke-dasharray: 4 3; }
 svg .arrow { fill: var(--muted); }
 svg .node { fill: var(--card); stroke-width: 1.5; }
@@ -520,11 +520,16 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
       `<rect class="bar t-${r.cls} s-${r.cls}${r.to ? "" : " open"}" x="${num(x)}" y="${y}" width="${num(w)}" height="${LANE - 8}" rx="3"><title>${esc(r.title)}</title></rect>`,
     );
   }
+  const taken = new Map<number, number[]>();
   for (const m of model.marks) {
     const i = index.get(m.lane);
     if (i === undefined) continue;
     // A spawn mark sits just before the first turn, which usually starts at once.
-    const x = xOf(f, when(m.at)) - (m.glyph === "○" ? 8 : 0);
+    let x = xOf(f, when(m.at)) - (m.glyph === "○" ? 8 : 0);
+    const row = taken.get(i) ?? [];
+    while (row.some((held) => Math.abs(held - x) < 9)) x -= 10;
+    row.push(x);
+    taken.set(i, row);
     marks.push(mark(x, mid(i), m.glyph, m.title, m.descriptionId));
   }
   parts.push(`<g class="mk">${marks.join("")}</g>`);
@@ -563,14 +568,23 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
   return `<section><h2>Timeline</h2>${missing}<div class="scroll">${svg}</div><p class="note">${legend}</p></section>`;
 }
 
+function graphNote(graphEdges: readonly AgentEdge[]): string {
+  return [
+    "Straight arrows are spawns, counting the parent's later wakes of that agent.",
+    "Curves count the turns one agent's messages or run updates started, each count by its arrowhead; ⇄ means the same both ways.",
+    ...(graphEdges.some((e) => e.kind === "asked") ? ["A dashed curve is a question to you."] : []),
+    "Kickoff and idle nudges are left out.",
+  ].join(" ");
+}
+
 // A spawn count beside its line, pushed off it along the normal so the line never strikes it.
 function spawnLabel(x1: number, y1: number, x2: number, y2: number, label: string): string {
   const len = Math.hypot(x2 - x1, y2 - y1) || 1;
   const side = x2 >= x1 ? 1 : -1;
   const nx = (side * (y2 - y1)) / len;
   const ny = (-side * (x2 - x1)) / len;
-  const x = x1 + (x2 - x1) * 0.6 + nx * 11;
-  const y = y1 + (y2 - y1) * 0.6 + ny * 11 + 3.5;
+  const x = x1 + (x2 - x1) * 0.8 + nx * 11;
+  const y = y1 + (y2 - y1) * 0.8 + ny * 11 + 3.5;
   return `<text class="count" x="${num(x)}" y="${num(y)}" text-anchor="middle">${label}</text>`;
 }
 
@@ -810,7 +824,7 @@ function whoWokeWhom(s: SwarmSummary): string {
     );
   }
   const svg = `<svg viewBox="0 0 ${W} ${num(height)}" role="img" aria-label="Who woke whom">${parts.join("")}</svg>`;
-  return `<section><h2>Who woke whom</h2><div class="scroll">${svg}</div><p class="note">A straight arrow is a spawn; a curve counts the turns one side's messages or run updates started (×n by the arrowhead it counts, ⇄ when both ways match); a dashed curve is a question to you. The task's kickoff and idle nudges are left out.</p></section>`;
+  return `<section><h2>Who woke whom</h2><div class="scroll">${svg}</div><p class="note">${graphNote(graphEdges)}</p></section>`;
 }
 
 // ---- Spend, runs, and the evidence the agents were given. ----

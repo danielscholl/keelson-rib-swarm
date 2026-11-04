@@ -74,7 +74,7 @@ export function firstLine(text: string, max = 72): string {
 export function taskHead(task: string, max = 72): string {
   const line = firstLine(task, 1000);
   const end = line.search(/[.?!]\s/);
-  const head = end >= 16 ? line.slice(0, end + 1) : line;
+  const head = (end >= 16 ? line.slice(0, end + 1) : line).replace(/\.$/, "");
   if (head.length <= max) return head;
   const cut = head.slice(0, max - 1);
   const space = cut.lastIndexOf(" ");
@@ -146,7 +146,7 @@ export function messageLine(swarmId: string, text: string, max = 120, author?: s
   let line = firstLine(plain(activityText(swarmId, text)), 1000)
     .replace(/\s*\(?\bmsg_[a-z0-9]+\)?/gi, "")
     .replace(/^(?:@[\w.-]+[,:]?\s+)+/, "");
-  const self = author ? line.match(/^@?([\w.-]+)(?::\s+|\s+(?=[\w-]+:\s))/) : null;
+  const self = author ? line.match(/^@?([\w.-]+?)(?:'s?)?(?::\s+|\s+)/) : null;
   if (self && self[1]?.toLowerCase() === author?.toLowerCase()) line = line.slice(self[0].length);
   if (line.length <= max) return line;
   const cut = line.slice(0, max - 1);

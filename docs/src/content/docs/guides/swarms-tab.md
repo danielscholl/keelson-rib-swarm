@@ -65,9 +65,8 @@ the plan (**Scout**, **Crew**, **Fleet**), seats in use of the plan's agents, an
 the models, lead first, then workers grouped by model with a count. On the
 right, meters against their ceilings: **Turns** (with the forecast's reading
 after the count), **Time** (minutes left and when it ends), **Fresh tokens**
-when a token ceiling is set, and **Cost** when the host prices tokens, split by
-kind in the Usage page's order (cache read, input, cache write, output) with its
-spend rate and cache hit. A meter warns past 80% of a ceiling or when the
+when a token ceiling is set, and **Cost** when the host prices tokens, one fill
+with its spend rate and cache hit (the Spend tab splits it by kind). A meter warns past 80% of a ceiling or when the
 forecast runs out before the clock.
 
 Each tab carries a count or total. A group with one non-empty tab shows its
@@ -89,9 +88,10 @@ Marks show spawns (○), questions (?), operator posts and answers (▲), report
 Nudges, caps and retirements keep their existing marks. The legend, here and on
 the record, lists only the marks that timeline draws.
 
-The live window starts at `startedAt` and its clock runs a quarter past the
-elapsed time, at least 2 minutes (half again, at least 30, for a factory
-swarm), and never past `startedAt + wallClockMs`.
+The live window starts at `startedAt` and its clock runs 30 seconds past now,
+rounded up to 15 seconds and at least 2 minutes (half again past the elapsed
+time, at least 30 minutes, for a factory swarm), and never past
+`startedAt + wallClockMs`.
 When `endedAt` is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
@@ -575,9 +575,10 @@ answers what happened, in what order, by whom, and at what cost:
   growing as the swarm runs; ended, the axis stops at the last event, counted
   in seconds under two minutes, and a rule marks when it ended.
 - **Who woke whom**: the agents as nodes in their colors, you and the runs
-  beside the lead, a straight arrow for each spawn and a curve for the turns
-  one side started, counted; two workers on one row share one curve below it,
-  with an arrowhead for each way that woke
+  beside the lead, a straight arrow for each spawn counting the parent's later
+  wakes, and a curve for the turns one side started, counted; two workers on one
+  row share one curve below it, with an arrowhead for each way that woke and
+  each count beside its arrowhead
 - **Tokens by agent**: fresh tokens, then cached tokens in a lighter bar after
   them, with each agent's cost
 - **Runs**: each run in full, with its branch, every pull request, its CI
@@ -730,7 +731,7 @@ records switch intent, not a promise that every tracker tool was granted.
 
 **Size** offers three plans. **Scout is selected by
 default**. Each card shows its agents, cost ceiling, minutes and the effective
-provider's models, and, once that plan has run here, its median and highest cost. Beside the figures, every card lists a Lead row and a Workers
+provider's models, and, once that plan has run here, its median and highest cost (a plan without runs says so once any plan has them). Beside the figures, every card lists a Lead row and a Workers
 row, even when they name the same model. Providers without pins use the matching
 class model.
 

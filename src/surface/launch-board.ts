@@ -134,8 +134,8 @@ function factorySummary(size: SwarmSize): string {
   return `${SIZE_PRESETS[size].maxAgents} agents until work stops landing or $${PLAN_COST_USD[size]}`;
 }
 
-function historyLine(history: PlanHistory | undefined): string {
-  if (!history) return "";
+function historyLine(history: PlanHistory | undefined, anyHistory: boolean): string {
+  if (!history) return anyHistory ? `<span class="plan-history">Here: no runs yet</span>` : "";
   const runs = history.runs === 1 ? "1 run" : `${history.runs} runs`;
   return `<span class="plan-history">Here: median ${cents(history.median)} · highest ${cents(history.highest)} · ${runs}</span>`;
 }
@@ -915,7 +915,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
     const selected = plan.size === DEFAULT_SIZE;
     return `<button class="plan" id="plan-${plan.size}" type="button" data-size="${plan.size}" data-power="${plan.power}" aria-pressed="${selected}">
       <span class="plan-title">${plan.name}</span>
-      <span class="plan-blurb">${plan.blurb}</span>${historyLine(state.planCosts?.[plan.size])}
+      <span class="plan-blurb">${plan.blurb}</span>${historyLine(state.planCosts?.[plan.size], Object.values(state.planCosts ?? {}).some(Boolean))}
       <span class="plan-body"><span class="figures"><span class="figure"><strong>${l.maxAgents}</strong>agents</span><span class="figure"><strong>$${PLAN_COST_USD[plan.size]}</strong>ceiling</span><span class="figure bounded"><strong>${l.wallClockMs / 60_000}</strong>min</span><span class="figure factory-only"><strong>until</strong>work stops</span></span>${pair ? `<span class="models plan-models" id="models-${plan.size}" data-lead="${esc(pair.lead)}" data-worker="${esc(pair.worker)}" data-pinned="${pair.pinned}">${modelCells(pair)}</span>` : ""}</span>
     </button>`;
   }).join("");
@@ -963,7 +963,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
       <div class="pickers">
           <div><label for="launch-model">Lead model</label><select id="launch-model" name="model"><option value="" selected>the plan's lead</option>${modelOptions}<option value="other">Other…</option></select><div class="other-model" id="other-model-row" hidden><label for="launch-other-model">Model name</label><input id="launch-other-model" type="text" autocomplete="off"></div><p class="hint detail" id="model-error" role="alert" hidden></p></div>
           <div><label for="launch-worker-model">Workers model</label><select id="launch-worker-model" name="worker_model"><option value="" selected>the plan's workers</option>${modelOptions}</select></div>
-          <div><label for="launch-cost">Cost ceiling</label><input id="launch-cost" name="max_cost_usd" type="number" min="${START_BOUNDS.maxCostUsd.min}" max="${START_BOUNDS.maxCostUsd.max}" step="any" inputmode="decimal" placeholder="the plan's" aria-describedby="cost-hint"><p class="hint detail" id="cost-hint">The plan's ceiling until you type one, in US dollars at list price. The swarm stops at it.</p></div>
+          <div><label for="launch-cost">Cost ceiling</label><input id="launch-cost" name="max_cost_usd" type="number" min="${START_BOUNDS.maxCostUsd.min}" max="${START_BOUNDS.maxCostUsd.max}" step="any" inputmode="decimal" placeholder="the plan's" aria-describedby="cost-hint"><p class="hint detail" id="cost-hint">Defaults to the plan's ceiling, in US dollars at list price. The swarm stops when it reaches it.</p></div>
           <div class="project-row" id="project-row"><label for="launch-project">Project</label><select id="launch-project" name="project" aria-describedby="project-note">
             <option value="" selected>No project · chat only</option>${options}${state.canCreateProject ? '<option value="new">New project…</option>' : ""}
           </select></div>
@@ -1040,7 +1040,6 @@ export function runAgainItem(s: SwarmSummary, launch: StartSwarmInput): Item[] {
     {
       type: "run-again",
       label: "Go deeper",
-      glyph: "›",
       hint: `Starts a ${next.name} with ${reuses}. Context is not refreshed.`,
       payload: { id: s.id, size: next.size, power: next.power },
     },

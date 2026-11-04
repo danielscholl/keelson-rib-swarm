@@ -749,6 +749,13 @@ describe("message lines", () => {
     expect(messageLine("s1", "keys correction: take cls", 120, "keys")).toBe(
       "correction: take cls",
     );
+    expect(messageLine("s1", "keys' latest word is long", 120, "keys")).toBe("latest word is long");
+    expect(messageLine("s1", "keys DEFINITIVE (my error)", 120, "keys")).toBe(
+      "DEFINITIVE (my error)",
+    );
+    expect(messageLine("s1", "keys' latest word is long", 120, "metrics")).toBe(
+      "keys' latest word is long",
+    );
     expect(messageLine("s1", `${"word ".repeat(10)}through. more text`, 62)).toBe(
       `${"word ".repeat(10)}through…`,
     );
@@ -1824,7 +1831,6 @@ describe("the agent inspector", () => {
           {
             type: "open-record",
             label: "Timeline",
-            glyph: "◷",
             hint: "All recorded turns are on the record's timeline.",
             payload: { id: s.id },
           },
@@ -2145,15 +2151,26 @@ describe("the live cockpit", () => {
       expect(meters.items.map((b) => b.label)).toEqual(["Turns", "Time", "Fresh tokens", "Cost"]);
       const cost = meters.items[3];
       expect(cost?.total).toBe(60);
-      expect(cost?.segments?.map((x) => x.tone)).toEqual(["ramp-2", "ramp-3", "ramp-5"]);
-      expect(cost?.segments?.map((x) => x.label.split(" $")[0])).toEqual([
-        "cache read",
-        "input",
-        "output",
-      ]);
+      expect(cost?.segments).toBeUndefined();
     } finally {
       setPricer(undefined);
     }
+  });
+
+  test("a live timeline ends 30 seconds past now, on a 15-second step, at least 2 minutes in", () => {
+    const s = swarm("sliveaxis", {});
+    const until = (seconds: number) => {
+      const now = new Date(Date.parse(T0) + seconds * 1000);
+      const section = leaves(buildCockpit(s, [], { titled: false, now })).find(
+        (x) => x.kind === "timeline",
+      );
+      if (section?.kind !== "timeline") throw new Error("missing timeline");
+      const window = section.window as { clock?: { until: string } };
+      return (Date.parse(window.clock?.until ?? "") - Date.parse(T0)) / 1000;
+    };
+    expect(until(10)).toBe(120);
+    expect(until(100)).toBe(135);
+    expect(until(131)).toBe(165);
   });
 
   test("a factory swarm's timeline runs a little past now instead of to its 12-hour backstop", () => {
@@ -12546,7 +12563,6 @@ describe("start and run again", () => {
       {
         type: "run-again",
         label: "Go deeper",
-        glyph: "›",
         hint: "Starts a Crew with the same task. Context is not refreshed.",
         payload: { id: fixtures.done!.id, size: "medium", power: "balanced" },
       },

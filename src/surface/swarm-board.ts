@@ -518,8 +518,6 @@ function costBar(s: SwarmSummary, now: Date): Bar[] {
   const max = s.spend?.maxCostUsd;
   const rate = live(s) ? spendRate(s, now) : undefined;
   const hit = cacheHit(s.usage);
-  const kinds = costKinds(s);
-  const segments = kinds ? kindSegments(kinds) : [];
   return [
     {
       label: "Cost",
@@ -530,7 +528,6 @@ function costBar(s: SwarmSummary, now: Date): Bar[] {
         ...(rate !== undefined ? [`${cents(rate)}/min`] : []),
         ...(hit !== undefined ? [`${Math.round(hit * 100)}% cache hit`] : []),
       ].join(" · "),
-      ...(segments.length > 0 ? { segments } : {}),
       ...(live(s) && max !== undefined && cost.usd >= max * SPEND_WARN_AT
         ? { tone: "warn" as const }
         : {}),
@@ -566,7 +563,6 @@ export function shapeBlock(
 export const openRecord = (s: SwarmSummary) => ({
   type: "open-record",
   label: "Timeline",
-  glyph: "◷",
   hint: "The swarm's timeline, who woke whom, spend, runs, evidence and Activity.",
   payload: { id: s.id },
 });
@@ -854,16 +850,6 @@ function costKinds(s: SwarmSummary) {
     kinds.read += read;
   }
   return priced ? kinds : undefined;
-}
-
-// The Usage page's order (cache read, input, cache write, output) on one ramp.
-function kindSegments(kinds: NonNullable<ReturnType<typeof costKinds>>): Segment[] {
-  return [
-    { label: `cache read ${usd(kinds.read)}`, n: kinds.read, tone: "ramp-2" as const },
-    { label: `input ${usd(kinds.input)}`, n: kinds.input, tone: "ramp-3" as const },
-    { label: `cache write ${usd(kinds.write)}`, n: kinds.write, tone: "ramp-4" as const },
-    { label: `output ${usd(kinds.output)}`, n: kinds.output, tone: "ramp-5" as const },
-  ].filter((k) => k.n > 0);
 }
 
 function costByKind(s: SwarmSummary): Leaf[] {
@@ -1373,15 +1359,19 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
 // a little past now and grows as the swarm does; the Time meter keeps the deadline.
 const FACTORY_AXIS_MS = 30 * 60_000;
 const LIVE_AXIS_MS = 60_000;
+const LIVE_MARGIN_MS = 30_000;
+const LIVE_STEP_MS = 15_000;
 function timelineUntil(s: SwarmSummary, now: Date): string {
   const start = Date.parse(s.startedAt);
   const clock = start + s.limits.wallClockMs;
   const step = s.factory ? FACTORY_AXIS_MS : LIVE_AXIS_MS;
   const elapsed = Math.max(0, now.getTime() - start);
-  const span = Math.max(
-    s.factory ? step : 2 * step,
-    Math.ceil((elapsed * (s.factory ? 1.5 : 1.25)) / step) * step,
-  );
+  const span = s.factory
+    ? Math.max(step, Math.ceil((elapsed * 1.5) / step) * step)
+    : Math.max(
+        2 * LIVE_AXIS_MS,
+        Math.ceil((elapsed + LIVE_MARGIN_MS) / LIVE_STEP_MS) * LIVE_STEP_MS,
+      );
   return new Date(Math.min(clock, start + span)).toISOString();
 }
 

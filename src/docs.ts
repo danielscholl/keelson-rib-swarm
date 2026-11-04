@@ -597,9 +597,8 @@ the plan (Scout, Crew, Fleet), seats in use of the plan's agents, and the
 models, lead first, then workers grouped by model with a count. On the right,
 meters against their ceilings: Turns (with the forecast's reading after the
 count), Time (minutes left and when it ends), Fresh tokens when a token ceiling
-is set, and Cost when the host prices tokens, split by kind in the Usage page's
-order (cache read, input, cache write, output) with its spend rate and cache
-hit. A meter warns past ${SPEND_WARN_AT * 100}% of a ceiling or when the
+is set, and Cost when the host prices tokens, one fill with its spend rate and
+cache hit (the Spend tab splits it by kind). A meter warns past ${SPEND_WARN_AT * 100}% of a ceiling or when the
 forecast runs out before the clock.
 
 Each tab carries a count or total. A group with one non-empty tab shows its
@@ -618,8 +617,9 @@ Marks show spawns (○), questions (?), operator posts and answers (▲), report
 Nudges, caps and retirements keep their existing marks. The legend, here and on
 the record, lists only the marks that timeline draws.
 
-The live window starts at startedAt and its clock runs a quarter past the elapsed
-time, at least 2 minutes (half again, at least 30, for a factory swarm), and never past startedAt + wallClockMs.
+The live window starts at startedAt and its clock runs 30 seconds past now, rounded
+up to 15 seconds and at least 2 minutes (half again past the elapsed time, at least
+30 minutes, for a factory swarm), and never past startedAt + wallClockMs.
 When endedAt is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
@@ -947,7 +947,7 @@ access or workflows.
 
 Size offers three plans. Scout is selected by default.
 Each card shows its agents, cost ceiling, minutes and the effective provider's models,
-and, once that plan has run here, its median and highest cost and how many runs.
+and, once that plan has run here, its median and highest cost and how many runs; a plan without runs says so once any plan has them.
 Beside the figures, every card lists a Lead row and a Workers row, even when
 they name the same model. Providers without pins use the matching class model.
 
