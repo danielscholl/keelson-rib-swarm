@@ -29,7 +29,8 @@ names the total in its heading. Each card leads with the request:
   clock
 - the footnote names the task and swarm id; a question's title carries the
   swarm id instead, and its first button is **Reply**, since the question is
-  already on the card
+  already on the card; **Read question** appears only when the card shows part
+  of it
 - the first button is the request's verb: **Review plan**, **Read question**,
   **Open swarm**, or **Message the lead**; replies and dismissal appear when
   they apply, and **Open swarm** expands the swarm on the page
@@ -147,7 +148,8 @@ Provenance names the parent and join time. Writers show worktree, branch,
 draft PR and observed CI, with an **Open PR** link.
 
 **Said** is this agent's recent messages only, newest first, each opening to
-its full text. **Turns** shows its newest 40 recorded spans first and names the
+its full text. **Turns** shows its newest 40 recorded spans first, with
+HH:MM:SS times and the swarm's date in its heading, and names the
 total when older turns are hidden. **Timeline** opens the record with every recorded
 turn on the timeline. The quiet
 **its messages · transcript ↗** link opens the channel, not a complete
@@ -284,13 +286,13 @@ It retains the numeric used count and existing sparkline.
 
 - **Conversation** shows at most eight rows, newest first. Each has the
   author's short handle in its identity color, or neutral **you** for an
-  operator post; a reply starts with **↳**. Its **HH:MM** time sits at the
-  end. Rows are plain text, without leading @addresses or message ids, cut
-  at a word. The final row reads **23 messages ·
+  operator post; a reply starts with **↳**. Its **HH:MM:SS** time sits at the
+  end. Rows are plain text, without leading @addresses, message ids or the
+  author's own "name:" label, cut at a word. The final row reads **23 messages ·
   transcript ↗**, using the swarm's count and linking the channel.
 
 The rib keeps only the newest 20 messages, oldest first, and the first
-200 characters of each. A row shows its first line, at most 90 characters,
+200 characters of each. A row shows its first line, at most 120 characters,
 as plain field text: emphasis and code marks come off, but HTML and markdown
 links stay literal. The status tools and the durable op record leave the
 recent-message buffer out; `messageCount` counts every ingested message.
@@ -463,7 +465,7 @@ Live details do not repeat an agent bench. The remaining details depend on
 the lifecycle:
 
 - **Agents** (ended only, the first tab): proportional identity-colored agent cards with
-  turns, role, tokens and the last event. They select the same read-only
+  turns, role and tokens. They select the same read-only
   inspector, without monospace/stacked cards or ghost seats.
 - **Spend**, once an agent has spent: a table
   of each agent's model and provider (the cockpit and ended board leave the
@@ -562,13 +564,14 @@ board preview.
 answers what happened, in what order, by whom, and at what cost:
 
 - **Timeline**: a lane per agent in the order they first worked, yours above
-  and one per run below. Each turn is a bar in the agent's color, from its
+  when you posted or answered, and one per run below. Each turn is a bar in the agent's color, from its
   start to its end, hatched when it timed out or failed and dashed while it
   runs. Marks show when an agent was spawned (○), asked you something (?), when
   you posted or answered (▲), the report (▪), the conclusion (●), a run's gate
   opening and being answered (◇ ◆), and a verified run (✓); hover any bar or
   mark for its detail. Live, a rule marks now and the axis runs a little past it,
-  growing as the swarm runs; ended, a rule marks when it ended.
+  growing as the swarm runs; ended, the axis stops at the last event, counted
+  in seconds under two minutes, and a rule marks when it ended.
 - **Who woke whom**: the agents as nodes in their colors, you and the runs
   beside the lead, a straight arrow for each spawn and a curve for the turns
   one side started, counted; two workers on one row share one curve below it,

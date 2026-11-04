@@ -147,10 +147,11 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 .mono { font-variant-numeric: tabular-nums; font-size: 13px; }
 .eyebrow { font-size: 12.5px; color: var(--muted); margin: 0; }
 .meta, .note { color: var(--muted); font-size: 12.5px; }
+.key { white-space: nowrap; }
 .lede { margin: 0 0 8px; color: var(--fg); font-size: 14px; }
 .scroll { overflow-x: auto; }
 svg { display: block; width: 100%; min-width: 640px; height: auto; }
-svg text { font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; fill: var(--muted); }
+svg text { font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; fill: color-mix(in srgb, var(--fg) 70%, var(--muted)); }
 svg .lane { stroke: var(--border); stroke-width: 1; }
 svg .tick { stroke: var(--border); stroke-dasharray: 2 3; }
 svg .now { stroke: var(--accent); stroke-width: 1.5; }
@@ -167,7 +168,7 @@ svg .asked { stroke-dasharray: 4 3; }
 svg .arrow { fill: var(--muted); }
 svg .node { fill: var(--card); stroke-width: 1.5; }
 svg .nodet { font-size: 11.5px; text-anchor: middle; fill: var(--fg-strong); }
-svg .count { font-size: 10.5px; fill: var(--muted);
+svg .count { font-size: 10.5px; fill: var(--fg);
   paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }
 .t-brand { fill: var(--accent); } .t-idb { fill: var(--id-blue); } .t-ida { fill: var(--id-amber); }
 .t-idt { fill: var(--id-teal); } .t-idr { fill: var(--id-rose); } .t-ido { fill: var(--id-olive); }
@@ -175,7 +176,9 @@ svg .count { font-size: 10.5px; fill: var(--muted);
 .t-info { fill: var(--info); } .t-caution { fill: var(--warn); }
 .s-brand { stroke: var(--accent); } .s-idb { stroke: var(--id-blue); } .s-ida { stroke: var(--id-amber); }
 .s-idt { stroke: var(--id-teal); } .s-idr { stroke: var(--id-rose); } .s-ido { stroke: var(--id-olive); }
-.s-neu { stroke: var(--muted); }
+.s-neu { stroke: var(--muted); } .s-good { stroke: var(--good); } .s-crit { stroke: var(--crit); }
+.s-info { stroke: var(--info); } .s-caution { stroke: var(--warn); }
+svg .bar { fill-opacity: .3; stroke-width: 1.2; stroke-linejoin: round; }
 .c-brand { color: var(--accent); } .c-idb { color: var(--id-blue); } .c-ida { color: var(--id-amber); }
 .c-idt { color: var(--id-teal); } .c-idr { color: var(--id-rose); } .c-ido { color: var(--id-olive); }
 .c-neu { color: var(--muted); }
@@ -233,7 +236,7 @@ function frameOf(s: SwarmSummary, composedAt: Date): Frame {
     ...(s.spans ?? []).map((t) => when(t.endedAt)),
     ...(s.runs ?? []).map((r) => when(r.completedAt)),
   ].filter(Number.isFinite);
-  return { t0, t1: Math.max(t0 + MINUTE, ...ends), deadline };
+  return { t0, t1: Math.max(t0 + 10_000, ...ends), deadline };
 }
 
 function xOf(f: Frame, t: number): number {
@@ -241,7 +244,20 @@ function xOf(f: Frame, t: number): number {
   return GUTTER + (PLOT * (clamped - f.t0)) / (f.t1 - f.t0);
 }
 
+const SECOND_STEPS = [5, 10, 15, 30];
+
 function ticks(f: Frame): string {
+  const seconds = (f.t1 - f.t0) / 1000;
+  if (seconds < 120) {
+    const step = SECOND_STEPS.find((n) => seconds / n <= MAX_TICKS) ?? 30;
+    const out: string[] = [];
+    for (let n = 0; n <= seconds; n += step) {
+      const x = xOf(f, f.t0 + n * 1000);
+      const anchor = n === 0 ? "start" : x > W - RIGHT - 24 ? "end" : "middle";
+      out.push(`<text x="${num(x)}" y="12" text-anchor="${anchor}">${n} s</text>`);
+    }
+    return out.join("");
+  }
   const minutes = (f.t1 - f.t0) / MINUTE;
   const step = TICK_STEPS.find((m) => minutes / m <= MAX_TICKS) ?? 480;
   const out: string[] = [];
@@ -427,7 +443,8 @@ function mark(x: number, y: number, glyph: string, title: string, descriptionId?
 function timeline(s: SwarmSummary, composedAt: Date): string {
   const f = frameOf(s, composedAt);
   const model = buildTimelineModel(s);
-  const all = model.lanes;
+  const heard = model.marks.some((m) => m.lane === "operator");
+  const all = heard ? model.lanes : model.lanes.filter((l) => l.kind !== "operator");
   const index = new Map(all.map((l, i) => [l.id, i]));
   const height = laneY(all, all.length - 1) + LANE + GAP + 4;
   const mid = (i: number) => laneY(all, i) + LANE / 2 + 4;
@@ -453,8 +470,11 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
     const a = when(t.from);
     const b = t.to ? when(t.to) : end;
     if (i === undefined || !ok(a, b)) continue;
-    const x = xOf(f, a);
-    const w = Math.max(MIN_SPAN, xOf(f, b) - x);
+    const raw = xOf(f, b) - xOf(f, a);
+    // A turn that starts as the last one ends would merge into it without the inset.
+    const inset = raw > 6 ? 1 : 0;
+    const x = xOf(f, a) + inset;
+    const w = Math.max(MIN_SPAN, raw - 2 * inset);
     const y = laneY(all, i) + 2;
     const cls = t.cls;
     const title = `<title>${esc(t.title)}</title>`;
@@ -466,7 +486,8 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
     }
     turns.set(cls, group);
   }
-  for (const [cls, paths] of turns) parts.push(`<g class="t-${cls}">${paths.join("")}</g>`);
+  for (const [cls, paths] of turns)
+    parts.push(`<g class="bar t-${cls} s-${cls}">${paths.join("")}</g>`);
 
   for (const r of model.spans.filter((item) => item.kind === "run")) {
     const i = index.get(r.lane);
@@ -478,7 +499,7 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
     const w = Math.max(MIN_SPAN, xOf(f, b) - x);
     const y = laneY(all, i) + 4;
     parts.push(
-      `<rect class="t-${r.cls}${r.to ? "" : " open"}" x="${num(x)}" y="${y}" width="${num(w)}" height="${LANE - 8}" rx="2" opacity=".8"><title>${esc(r.title)}</title></rect>`,
+      `<rect class="bar t-${r.cls} s-${r.cls}${r.to ? "" : " open"}" x="${num(x)}" y="${y}" width="${num(w)}" height="${LANE - 8}" rx="3"><title>${esc(r.title)}</title></rect>`,
     );
   }
   for (const m of model.marks) {
@@ -510,8 +531,17 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
   }
 
   const svg = `<svg viewBox="0 0 ${W} ${height + 14}" role="img" aria-label="Timeline: turns by agent and runs over time">${parts.join("")}</svg>`;
-  const legend =
-    "Bars are turns in each agent's color, hatched when a turn timed out or failed, dashed while running. ○ spawned · ? asked you · ▲ you · ▪ report · ● conclusion · ◇ gate opened · ◆ gate answered · ✓ verified.";
+  const keys = [
+    "○ spawned",
+    "? asked you",
+    "▲ you",
+    "▪ report",
+    "● conclusion",
+    "◇ gate opened",
+    "◆ gate answered",
+    "✓ verified",
+  ];
+  const legend = `Bars are turns in each agent's color, hatched when a turn timed out or failed, dashed while running. ${keys.map((k) => `<span class="key">${k}</span>`).join(" · ")}.`;
   const missing = s.spans?.length
     ? ""
     : `<p class="note">This swarm was recorded before turns were kept, so the lanes carry its events and runs only.</p>`;
@@ -666,10 +696,10 @@ function whoWokeWhom(s: SwarmSummary): string {
       const rightward = x1 < x2 ? e : back;
       const leftward = x1 < x2 ? back : e;
       const near = right.x - left.x <= W / 4 + 1;
-      const sx = left.x + NODE_W * (near ? 0.3 : 0.06);
-      const tx = right.x - NODE_W * (near ? 0.3 : 0.06);
+      const sx = left.x + NODE_W * (near ? 0.36 : -0.02);
+      const tx = right.x - NODE_W * (near ? 0.36 : -0.02);
       const sy = y1 + NODE_H / 2 + 4;
-      const cy = sy + 12 + ((right.x - left.x) / (W / 4)) * 28;
+      const cy = sy + 12 + ((right.x - left.x) / (W / 4)) * 28 + (near ? 0 : 20);
       const apex = (sy + cy) / 2;
       const n = (rightward?.n ?? 0) + (leftward?.n ?? 0);
       const text =
@@ -679,12 +709,12 @@ function whoWokeWhom(s: SwarmSummary): string {
             : `×${rightward.n} → ← ×${leftward.n}`
           : `×${n}`;
       parts.push(
-        `<path class="edge" d="M${num(sx)} ${num(sy)}Q${num((sx + tx) / 2)} ${num(cy)} ${num(tx)} ${num(sy)}" stroke-width="${num(1 + Math.min(3, Math.log2(n)))}"${rightward ? ' marker-end="url(#arrow)"' : ""}${leftward ? ' marker-start="url(#arrow)"' : ""}/>`,
+        `<path class="edge" d="M${num(sx)} ${num(sy)}Q${num((sx + tx) / 2)} ${num(cy)} ${num(tx)} ${num(sy)}" stroke-width="1.4"${rightward ? ' marker-end="url(#arrow)"' : ""}${leftward ? ' marker-start="url(#arrow)"' : ""}/>`,
         `<text class="count" x="${num((sx + tx) / 2)}" y="${num(near ? apex - 5 : apex + 14)}" text-anchor="middle">${text}</text>`,
       );
       continue;
     }
-    const width = e.kind === "spawned" ? 1.2 : 1 + Math.min(3, Math.log2(e.n));
+    const width = e.kind === "spawned" ? 1.2 : 1.4;
     const label =
       e.kind === "spawned"
         ? e.woke
@@ -700,7 +730,7 @@ function whoWokeWhom(s: SwarmSummary): string {
         `<line class="edge spawn" x1="${num(x1)}" y1="${num(sy)}" x2="${num(x2)}" y2="${num(ty)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
         ...(label
           ? [
-              `<text class="count" x="${num((x1 + x2) / 2 + 8)}" y="${num((sy + ty) / 2 + 3.5)}">${label}</text>`,
+              `<text class="count" x="${num(x1 + (x2 - x1) * 0.7 + 8)}" y="${num(sy + (ty - sy) * 0.7 + 3.5)}">${label}</text>`,
             ]
           : []),
       );

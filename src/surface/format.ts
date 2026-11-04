@@ -16,6 +16,11 @@ export function hhmm(iso: string | undefined): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+export function hhmmss(iso: string | undefined): string {
+  if (!iso) return "";
+  return `${hhmm(iso)}:${String(new Date(iso).getSeconds()).padStart(2, "0")}`;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function day(iso: string): string {
@@ -136,11 +141,13 @@ export function activityText(swarmId: string, text: string): string {
 }
 
 // Field text renders as is: links and HTML stay literal, not clickable markup.
-// A preview row: no leading @addresses or message ids, cut at a word.
-export function messageLine(swarmId: string, text: string, max = 90): string {
-  const line = firstLine(plain(activityText(swarmId, text)), 1000)
+// A preview row: no leading @addresses, message ids, or the author's own "name:" label, cut at a word.
+export function messageLine(swarmId: string, text: string, max = 120, author?: string): string {
+  let line = firstLine(plain(activityText(swarmId, text)), 1000)
     .replace(/\s*\(?\bmsg_[a-z0-9]+\)?/gi, "")
     .replace(/^(?:@[\w.-]+[,:]?\s+)+/, "");
+  const self = author ? line.match(/^@?([\w.-]+):\s+/) : null;
+  if (self && self[1]?.toLowerCase() === author?.toLowerCase()) line = line.slice(self[0].length);
   if (line.length <= max) return line;
   const cut = line.slice(0, max - 1);
   const space = cut.lastIndexOf(" ");

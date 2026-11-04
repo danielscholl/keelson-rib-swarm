@@ -41,6 +41,7 @@ import {
   dayHeading,
   gist,
   hhmm,
+  hhmmss,
   messageLine,
   shortRun,
   threadHref,
@@ -742,7 +743,9 @@ describe("message lines", () => {
     expect(messageLine("s1", "@s1-lead @s1-w Final per keys (msg_01abc9): prefix sf")).toBe(
       "Final per keys: prefix sf",
     );
-    expect(messageLine("s1", "x".repeat(100))).toBe(`${"x".repeat(89)}…`);
+    expect(messageLine("s1", "x".repeat(130))).toBe(`${"x".repeat(119)}…`);
+    expect(messageLine("s1", "keys: posts crossed", 120, "keys")).toBe("posts crossed");
+    expect(messageLine("s1", "keys: posts crossed", 120, "lead")).toBe("keys: posts crossed");
     expect(messageLine("s1", "x".repeat(20), 10)).toBe(`${"x".repeat(9)}…`);
   });
 });
@@ -1726,7 +1729,7 @@ describe("the agent inspector", () => {
       "First",
     ]);
     expect(said?.kind === "rows" ? said.items.some((r) => r.href) : true).toBe(false);
-    const turns = leaves(view.sections).find((x) => x.title === "Turns");
+    const turns = leaves(view.sections).find((x) => x.title?.startsWith("Turns ·"));
     expect(turns?.kind === "rows" ? turns.items.length : 0).toBe(2);
     expect(text).toContain("took 30 s");
     const composer = leaves(view.sections).find((x) => x.kind === "actions");
@@ -1804,7 +1807,7 @@ describe("the agent inspector", () => {
       const view = inspect(summary, 0);
       expect(Buffer.byteLength(JSON.stringify(view))).toBeLessThan(48_000);
       const turns = leaves(view.sections).find((x) => x.title?.startsWith("Turns"));
-      expect(turns?.title).toBe(`Turns · newest ${INSPECTOR_TURNS_SHOWN} of 189`);
+      expect(turns?.title).toStartWith(`Turns · newest ${INSPECTOR_TURNS_SHOWN} of 189 · `);
       expect(turns?.kind === "rows" ? turns.items : []).toHaveLength(INSPECTOR_TURNS_SHOWN);
       if (turns?.kind !== "rows") throw new Error("expected turns");
       expect(turns.items[0]?.text).toStartWith("Turn 189");
@@ -1825,7 +1828,7 @@ describe("the agent inspector", () => {
       expect(summary.spans).toHaveLength(200);
     }
     const short = inspect({ ...s, spans: s.spans!.slice(0, INSPECTOR_TURNS_SHOWN) }, 0);
-    const turns = leaves(short.sections).find((x) => x.title === "Turns");
+    const turns = leaves(short.sections).find((x) => x.title?.startsWith("Turns ·"));
     expect(turns?.kind === "rows" ? turns.items.at(-1)?.text : "").toStartWith("Turn 1");
     expect(JSON.stringify(short)).not.toContain('"type":"open-record"');
   });
@@ -1957,7 +1960,7 @@ describe("the agent inspector", () => {
     expect(text).toContain("unknown source missing");
     expect(text).toContain("Woken by not recorded");
     expect(text).not.toContain('"clock"');
-    const turns = leaves(view.sections).find((x) => x.title === "Turns");
+    const turns = leaves(view.sections).find((x) => x.title?.startsWith("Turns ·"));
     expect(turns?.kind === "rows" ? turns.items[0]?.text : "").toContain("Turn 2");
   });
 });
@@ -2370,8 +2373,8 @@ describe("the live cockpit", () => {
             : m.author.endsWith("-w1")
               ? { name: "w1", tone: "id-blue", face: "W" }
               : { name: "lead", tone: "brand", face: "L" },
-        text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text)}`,
-        trailing: hhmm(m.at),
+        text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text, 120, m.author === "operator" ? "you" : m.author.endsWith("-w1") ? "w1" : "lead")}`,
+        trailing: hhmmss(m.at),
       });
     }
     expect(conversation.items.at(-1)).toEqual({
@@ -2429,7 +2432,7 @@ describe("the live cockpit", () => {
     const conversation = sections(s).find((x) => x.title === "Conversation");
     if (conversation?.kind !== "rows") throw new Error("expected Conversation rows");
     expect(conversation.items).toEqual([
-      { text: "[link](https://other)", trailing: hhmm(T0) },
+      { text: "[link](https://other)", trailing: hhmmss(T0) },
       { text: "1 message · transcript ↗" },
     ]);
   });
@@ -3188,7 +3191,21 @@ describe("Swarms boards", () => {
     expect(question?.fields?.some((field) => field.href)).toBe(false);
     expect(JSON.stringify(question)).not.toContain("in ClickClack");
     expect(question?.actions?.[0]).toMatchObject({ type: "reply-ask", tone: "brand" });
-    expect(question?.actions?.[1]).toMatchObject({
+    expect(question?.actions?.some((x) => x.type === "select-ask")).toBe(false);
+    const long = {
+      ...fixtures.asked!,
+      health: {
+        ...fixtures.asked!.health!,
+        asks: [
+          {
+            ...fixtures.asked!.health!.asks![0]!,
+            text: "Context first.\nwhich retry cap, 30 s or 60 s?",
+          },
+          ...fixtures.asked!.health!.asks!.slice(1),
+        ],
+      },
+    };
+    expect(cardsOf(buildIndex(state({ live: [long] })))[0]?.actions?.[1]).toMatchObject({
       type: "select-ask",
       label: "Read question",
       payload: { id: fixtures.asked!.id, messageId: fixtures.asked!.health!.asks![0]!.messageId },
@@ -4586,7 +4603,7 @@ describe("the details", () => {
     },
   );
 
-  test("activity rows chip their actor, and the bench names each agent's last event", () => {
+  test("activity rows chip their actor, and the ended bench carries no last-event footnote", () => {
     const at = (m: number) => `2026-09-22T14:0${m}:00.000Z`;
     const s = swarm("s7chp", {
       status: "done",
@@ -4636,8 +4653,7 @@ describe("the details", () => {
       (x) => x.kind === "cards" && x.title?.startsWith("Agents"),
     );
     const cards = bench?.kind === "cards" ? bench.items : [];
-    expect(cards[0]?.footnote).toBe(`last: spawned @w1: reads logs · ${hhmm(at(1))}`);
-    expect(cards[1]?.footnote).toBe(`last turn ${hhmm(at(2))}`);
+    expect(cards.map((c) => c.footnote)).toEqual([undefined, undefined]);
   });
 
   test("an answered approval names its reviewer and discloses the reason", () => {
@@ -5013,7 +5029,7 @@ describe("publishing", () => {
       await Promise.all(pending);
       expect(JSON.stringify(sm.frames.get(askKey("s1"))?.at(-1))).toContain("second question?");
       expect(JSON.stringify(sm.frames.get(gateKey("s1"))?.at(-1))).toContain("second gate");
-      expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "Agent @w1 · s1" });
+      expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "@w1" });
       await Bun.sleep(10);
       const index = expectView(INDEX_KEY, "board")(sm.frames.get(INDEX_KEY)?.at(-1));
       if (index.view !== "board") throw new Error("expected board");
@@ -5199,7 +5215,7 @@ describe("publishing", () => {
       await surface.selectAgent("s1", "s1-w1");
       const view = expectView(agentKey("s1"), "board")(sm.frames.get(agentKey("s1"))?.at(-1));
       if (view.view !== "board") throw new Error("expected inspector board");
-      expect(view.title).toBe("Agent @w1 · s1");
+      expect(view.title).toBe("@w1");
       await Bun.sleep(10);
       const index = expectView(INDEX_KEY, "board")(sm.frames.get(INDEX_KEY)?.at(-1));
       if (index.view !== "board") throw new Error("expected board");
@@ -5242,7 +5258,7 @@ describe("publishing", () => {
     sm.gate = undefined;
     try {
       await Promise.all([a, b]);
-      expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "Agent @w1 · s1" });
+      expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "@w1" });
       await Bun.sleep(10);
       const index = expectView(INDEX_KEY, "board")(sm.frames.get(INDEX_KEY)?.at(-1));
       if (index.view !== "board") throw new Error("expected board");
@@ -5304,7 +5320,7 @@ describe("publishing", () => {
       expect(sm.keys()).not.toContain(swarmKey("s1"));
       expect(sm.keys()).not.toContain(recordKey("s1"));
       expect(sm.keys()).toContain(agentKey("s1"));
-      expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "Agent @w1 · s1" });
+      expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "@w1" });
     } finally {
       surface.dispose();
     }
@@ -6970,7 +6986,7 @@ describe("actions", () => {
         placement: "side",
       });
       expect(sm.frames.get(agentKey("s9hjx"))?.at(-1)).toMatchObject({
-        title: "Agent @w1 · s9hjx",
+        title: "@w1",
       });
       const endedBench = leaves(buildSwarmBoard(fixtures.done!).sections).find(
         (section) => section.kind === "cards" && section.title?.startsWith("Agents"),
@@ -9870,8 +9886,6 @@ describe("launching from the tab", () => {
     capture({});
     trigger("plan-medium");
     expect(e["plan-medium"]!.attributes.get("aria-pressed")).toBe("true");
-    expect(e["chip-medium"]!.hidden).toBe(false);
-    expect(e["chip-small"]!.hidden).toBe(true);
     expect(e["launch-summary"]!.textContent).toBe("5 agents for up to 30 min or $10");
     expect(e["launch-models"]!.textContent).toBe("");
     capture({ size: "medium", power: "balanced" });
@@ -9882,7 +9896,6 @@ describe("launching from the tab", () => {
     e["launch-model"]!.value = JSON.stringify({ model: "claude-opus-5.5", provider: "copilot" });
     trigger("launch-model", "change");
     expect(e["plan-large"]!.attributes.get("aria-pressed")).toBe("true");
-    expect(e["chip-large"]!.hidden).toBe(false);
     expect(e["models-large"]!.textContent).toBe("Leadclaude-opus-5.5Workersgpt-6.1-sol");
     expect(e["models-medium"]!.textContent).toBe("Leadclaude-sonnet-5.5Workersgpt-6-sol");
     expect(e["launch-models"]!.textContent).toBe(" with lead claude-opus-5.5");
@@ -9894,8 +9907,6 @@ describe("launching from the tab", () => {
       worker_model: "gpt-6.1-sol",
     });
     trigger("plan-small");
-    expect(e["chip-small"]!.hidden).toBe(false);
-    expect(e["chip-large"]!.hidden).toBe(true);
     expect(e["launch-model"]!.value).toBe("");
     expect(e["launch-models"]!.textContent).toBe("");
     expect(e["models-large"]!.textContent).toBe("Leadclaude-opus-5.5Workersgpt-6.1-sol");
@@ -12061,8 +12072,7 @@ describe("launching from the tab", () => {
         ".pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));",
       );
       expect(page).toContain('id="other-model-row" hidden');
-      expect(page).toContain('id="chip-small">selected');
-      expect(page).toContain('id="chip-medium" hidden>selected');
+      expect(page).not.toContain(">selected<");
       expect(page).toContain(
         'id="plan-small" type="button" data-size="small" data-power="fast" aria-pressed="true"',
       );

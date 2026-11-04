@@ -577,7 +577,7 @@ with the question below it, Crew is at $32.00 of its $40.00 cost ceiling, ClickC
 No agent has worked since …) and its verb (Review plan, Read question, Raise to
 $60.00, Open swarm, Message the lead). The task and swarm
 id sit in the footnote; a question's title carries the swarm id instead, and
-its first button is Reply, since the question is already on the card. Open swarm expands that live swarm on the page.
+its first button is Reply, since the question is already on the card; Read question appears only when the card shows part of it. Open swarm expands that live swarm on the page.
 
 The expanded live swarm is a cockpit on the page, not in the drawer. It runs:
 the task and id with a lifecycle or needs-you pill and the crew as faces; a
@@ -665,7 +665,8 @@ never the requested model as served. Provenance names the parent and join time.
 Writers show worktree, branch, draft PR and observed CI, with an Open PR link.
 
 Said is this agent's recent messages only, newest first, each opening to its
-full text. Turns keeps its recorded spans newest first. The quiet Its messages ·
+full text. Turns keeps its recorded spans newest first with HH:MM:SS times, the
+swarm's date in its heading. The quiet Its messages ·
 transcript ↗ link opens the channel, not a complete agent-only message history.
 Message @agent posts as you with the roster's full handle mentioned, through
 the unchanged router. It wakes the selected agent and spends a turn; additional
@@ -763,9 +764,9 @@ It retains the numeric used count and existing sparkline.
 
 Conversation shows the eight newest channel messages, newest first. Each row
 carries its author's short handle in an identity-colored chip (you for the
-operator), ↳ on a reply, and its HH:MM time. Rows are plain text, without leading @addresses or message ids, cut at a word; the final
+operator), ↳ on a reply, and its HH:MM:SS time. Rows are plain text, without leading @addresses, message ids or the author's own "name:" label, cut at a word; the final
 count line links the transcript. The rib keeps only the newest 20 messages and their
-first 200 characters; the row shows the first line, at most 90 characters, as
+first 200 characters; the row shows the first line, at most 120 characters, as
 plain field text. Emphasis and code marks come off; HTML and markdown links stay
 literal. The status tools and the durable op record leave this recent-message
 buffer out, while messageCount counts every ingested message.
@@ -877,9 +878,8 @@ The transcript link is omitted when its address is unavailable.
 The back-link to Ended swarms is a separate row outside About.
 Each activity row carries its actor as a face in the
 agent's color, or you for the operator, and a turn is one row written when it
-ends, with its outcome, how long it took and what woke it. Each bench card's
-footnote names the agent's last event, and the Turns meter stops where the swarm
-ended. A note posted with Message the lead shows in the activity at
+ends, with its outcome, how long it took and what woke it. The Turns meter
+stops where the swarm ended. A note posted with Message the lead shows in the activity at
 once.
 
 Produced so far (Produced once ended) is one shared inventory in the cockpit and per-swarm board.
@@ -908,7 +908,7 @@ requests, and the board never removes worktrees. Engine cleanup policy is unchan
 
 Timeline shows the swarm's record, a page the rib draws: a timeline with
 a lane per agent (turns as bars in the agent's color, hatched when a turn timed
-out or failed), the operator's lane above and a lane per run below, with marks
+out or failed), the operator's lane above when you posted or answered and a lane per run below, with marks
 for spawns, questions to the operator, operator posts, the report, the
 conclusion, gates opened and answered, and verification; a graph of who woke
 whom; tokens by agent with fresh and cached tokens apart; each run in full;

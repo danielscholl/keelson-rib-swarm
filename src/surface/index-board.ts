@@ -23,6 +23,7 @@ import {
 } from "./format.ts";
 import {
   askGist,
+  askText,
   causeTitle,
   LIFECYCLE,
   livePill,
@@ -108,18 +109,22 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
   const actions = [request.primary, ...request.more].map(local);
   if (!actions.some((a) => a.type === "select-swarm")) actions.push(selectSwarm(s));
   if (need.kind === "question" && need.ask) {
+    const gist = askGist(need.ask.text, 320);
+    const whole = gist === askText(need.ask.text);
     return {
       title: `@${shortHandle(need.ask.handle, s.id)} asks · ${s.id}`,
       pill: request.pill,
       edge: request.pill.tone,
       prose: true,
-      fields: [{ value: askGist(need.ask.text, 320) }, ...sinceClock(need)],
+      fields: [{ value: gist }, ...sinceClock(need)],
       // The question is already on the card, so answering it is the lead action.
       actions: [
         ...actions
           .filter((x) => x.type === "reply-ask")
           .map((x) => ({ ...x, tone: "brand" as const })),
-        ...actions.filter((x) => x.type !== "reply-ask").map(quiet),
+        ...actions
+          .filter((x) => x.type !== "reply-ask" && !(whole && x.type === "select-ask"))
+          .map(quiet),
       ],
     };
   }

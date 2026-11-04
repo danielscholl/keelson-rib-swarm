@@ -171,14 +171,12 @@ textarea:hover, select:hover, input:hover { border-color: color-mix(in srgb, var
 textarea:focus, select:focus, input:focus { outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
 textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
-textarea::placeholder { color: var(--muted); opacity: 1; }
+textarea::placeholder { color: var(--muted); opacity: .75; }
 .task-hint { margin-top: 8px; }
 .task-hint:empty { display: none; }
 .plans { margin-top: 20px; }
 .plans-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .eyebrow { font-size: 13px; font-weight: 600; color: var(--fg-strong); }
-.plan-title .chip { padding: 2px 8px; border: 0; border-radius: 999px; font: 600 11px/1.4 var(--sans);
-  color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .chevron { display: inline-block; margin-left: 6px; }
 .plan-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .plan { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 16px;
@@ -196,7 +194,7 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .plan-models { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px;
   align-items: baseline; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 0; }
 .plan-models .role { font-family: var(--sans); font-size: 12px; color: var(--muted); }
-.plan-models .model { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.plan-models .model { font-family: var(--sans); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plan-models .model.is-picked { color: var(--accent); font-weight: 600; }
 .pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 .detail { margin-top: 10px; line-height: 1.5; }
@@ -508,7 +506,6 @@ const PAGE_SCRIPT = `
     cards.forEach((card) => {
       const selected = size === card.dataset.size && power === card.dataset.power;
       card.setAttribute("aria-pressed", String(selected));
-      document.getElementById("chip-" + card.dataset.size).hidden = !selected;
       showModels(card, selected ? model : "", selected ? worker : "");
     });
     const planCells = document.getElementById("models-" + size);
@@ -917,7 +914,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
     const pair = models[plan.power];
     const selected = plan.size === DEFAULT_SIZE;
     return `<button class="plan" id="plan-${plan.size}" type="button" data-size="${plan.size}" data-power="${plan.power}" aria-pressed="${selected}">
-      <span class="plan-title">${plan.name}<span class="chip" id="chip-${plan.size}"${selected ? "" : " hidden"}>selected</span></span>
+      <span class="plan-title">${plan.name}</span>
       <span class="plan-blurb">${plan.blurb}</span>${historyLine(state.planCosts?.[plan.size])}
       <span class="plan-body"><span class="figures"><span class="figure"><strong>${l.maxAgents}</strong>agents</span><span class="figure"><strong>$${PLAN_COST_USD[plan.size]}</strong>ceiling</span><span class="figure bounded"><strong>${l.wallClockMs / 60_000}</strong>min</span><span class="figure factory-only"><strong>until</strong>work stops</span></span>${pair ? `<span class="models plan-models" id="models-${plan.size}" data-lead="${esc(pair.lead)}" data-worker="${esc(pair.worker)}" data-pinned="${pair.pinned}">${modelCells(pair)}</span>` : ""}</span>
     </button>`;

@@ -15,6 +15,7 @@ import {
   day,
   firstLine,
   hhmm,
+  hhmmss,
   messageLine,
   plain,
   prLabel,
@@ -51,10 +52,8 @@ function wakeSources(s: SwarmSummary, t: TurnSpan): string {
 
 function turnText(s: SwarmSummary, t: TurnSpan): string {
   const active = isLive(s.status) && !s.endedAt && !t.endedAt;
-  const sameMinute = t.endedAt && hhmm(t.endedAt) === hhmm(t.startedAt);
-  const when = sameMinute
-    ? `${day(t.startedAt)} ${hhmm(t.startedAt)}`
-    : `${day(t.startedAt)} ${hhmm(t.startedAt)} → ${t.endedAt ? hhmm(t.endedAt) : active ? "in progress" : "end not recorded"}`;
+  const date = day(t.startedAt) === day(s.startedAt) ? "" : `${day(t.startedAt)} `;
+  const when = `${date}${hhmmss(t.startedAt)} → ${t.endedAt ? hhmmss(t.endedAt) : active ? "in progress" : "end not recorded"}`;
   return `Turn ${t.n} · ${when} · ${t.outcome ?? (active ? "running" : "outcome not recorded")}${t.endedAt ? ` · took ${span(t.startedAt, t.endedAt)}` : ""}`;
 }
 
@@ -120,7 +119,7 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
     .reverse();
   return {
     view: "board",
-    title: `Agent @${shortHandle(a.handle, s.id)} · ${s.id}`,
+    title: `@${shortHandle(a.handle, s.id)}`,
     sections: [
       {
         kind: "cards",
@@ -165,9 +164,9 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
         title: "Said · recent messages only",
         items: said.length
           ? said.map((m) => ({
-              text: messageLine(s.id, m.text),
+              text: messageLine(s.id, m.text, 120, shortHandle(a.handle, s.id)),
               detail: plain(m.text).slice(0, DETAIL_CHARS),
-              trailing: hhmm(m.at),
+              trailing: hhmmss(m.at),
             }))
           : [{ text: "No messages by this agent in the recent buffer." }],
       },
@@ -175,8 +174,8 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
         kind: "rows",
         title:
           turns.length > INSPECTOR_TURNS_SHOWN
-            ? `Turns · newest ${INSPECTOR_TURNS_SHOWN} of ${turns.length}`
-            : "Turns",
+            ? `Turns · newest ${INSPECTOR_TURNS_SHOWN} of ${turns.length} · ${day(s.startedAt)}`
+            : `Turns · ${day(s.startedAt)}`,
         items: turns.length
           ? turns
               .slice(0, INSPECTOR_TURNS_SHOWN)

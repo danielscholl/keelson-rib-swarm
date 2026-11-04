@@ -49,6 +49,7 @@ import {
   day,
   firstLine,
   hhmm,
+  hhmmss,
   messageLine,
   minutes,
   plain,
@@ -599,17 +600,9 @@ function agentCard(
   const turns = a.lead
     ? plural(a.turns, "turn")
     : `${a.turns} of ${s.limits.maxTurnsPerAgent} turns`;
-  const last = [...(s.activity ?? [])].reverse().find((e) => e.actor === a.id);
   // An ended bench reads as a summary, so every card states its turns the same way.
   const metered = live(s) && !a.lead;
   const foot = [
-    ...(last
-      ? [
-          /^turn \d+ /.test(actorText(s.id, last.text, a.id))
-            ? `last turn ${hhmm(last.at)}`
-            : `last: ${firstLine(actorText(s.id, last.text, a.id), 40)} · ${hhmm(last.at)}`,
-        ]
-      : []),
     ...(a.spawnedBy && !s.agents.some((x) => x.lead && x.handle === a.spawnedBy)
       ? [`spawned by @${shortHandle(a.spawnedBy, s.id)}`]
       : []),
@@ -1142,8 +1135,8 @@ function conversation(s: SwarmSummary): Leaf[] {
           const person = actorPerson(s, m.author);
           return {
             ...(person ? { person } : {}),
-            text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text)}`,
-            trailing: hhmm(m.at),
+            text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text, 120, person?.name)}`,
+            trailing: hhmmss(m.at),
           };
         }),
         {
@@ -1588,7 +1581,7 @@ export function buildSwarmBoard(s: SwarmSummary, opts: BoardOptions = {}): Canva
   const details = liveDetails(s, opts.selectedAgentId);
   return {
     view: "board",
-    title: `${taskHead(s.task)} · ${s.id}`,
+    title: taskHead(s.task, 60),
     header: {
       status: pill,
       ...(chip ? { chip } : {}),
