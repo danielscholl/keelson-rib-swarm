@@ -81,7 +81,7 @@ import {
   stateLine,
   stopAction,
 } from "./parts.ts";
-import { buildAgentEdges, buildTimelineModel } from "./record.ts";
+import { buildAgentEdges, buildTimelineModel, legendKeys } from "./record.ts";
 
 type Section = CanvasBoardView["sections"][number];
 type Leaf = Exclude<Section, { kind: "columns" | "tabs" }>;
@@ -1317,7 +1317,10 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
   const faces = agentFaces(s);
   const faceOf = (id: string) =>
     id === "operator" ? "Y" : faces[s.agents.findIndex((a) => a.id === id)];
-  const lanes = model.lanes.slice(0, 12).map(({ id, label, tone, group }) => {
+  const heard = model.marks.some((m) => m.lane === "operator");
+  const others = model.lanes.filter((lane) => lane.id !== "operator");
+  const shown = heard || others.length === 0 ? model.lanes : others;
+  const lanes = shown.slice(0, 12).map(({ id, label, tone, group }) => {
     const face = faceOf(id);
     return { id, label, ...(face ? { face } : {}), tone, ...(group ? { group } : {}) };
   });
@@ -1340,7 +1343,7 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     .slice(-200)
     .map(({ lane, at, glyph, title }) => ({ lane, at, glyph, title }));
   const clipped = [
-    ...(lanes.length < model.lanes.length ? [`${lanes.length}/${model.lanes.length} lanes`] : []),
+    ...(lanes.length < shown.length ? [`${lanes.length}/${shown.length} lanes`] : []),
     ...(spans.length < model.spans.length ? [`${spans.length}/${model.spans.length} spans`] : []),
     ...(marks.length < model.marks.length ? [`${marks.length}/${model.marks.length} marks`] : []),
   ];
@@ -1357,8 +1360,12 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     lanes,
     spans,
     marks,
-    legend:
-      "Bars are turns, hatched when one failed. ○ spawned · ? asked you · ▲ you · ▪ report · ● conclusion · ◇ gate · ✓ verified",
+    legend: [
+      `Bars are turns${spans.some((span) => span.hatched) ? ", hatched when one failed" : ""}.`,
+      legendKeys(marks.map((m) => m.glyph)).join(" · "),
+    ]
+      .filter(Boolean)
+      .join(" "),
   };
 }
 
@@ -1581,7 +1588,7 @@ export function buildSwarmBoard(s: SwarmSummary, opts: BoardOptions = {}): Canva
   const details = liveDetails(s, opts.selectedAgentId);
   return {
     view: "board",
-    title: taskHead(s.task, 60),
+    title: taskHead(s.task, 110),
     header: {
       status: pill,
       ...(chip ? { chip } : {}),

@@ -203,7 +203,7 @@ export function endedRow(s: SwarmSummary): Row {
       ...(cost ? [rowCost(cost, estimated(s))] : []),
       hhmm(s.endedAt ?? s.startedAt),
       ...(verified ? [verified] : []),
-      ...(s.report ? ["◧ report"] : []),
+      ...(s.report ? ["report"] : []),
     ].join(" · "),
     action: { type: "swarm-open", payload: { id: s.id } },
   };

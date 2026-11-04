@@ -609,12 +609,14 @@ Model column, since the shape block names the models.
 
 Timeline is a native section in the Timeline tab beside Map, on the live cockpit only,
 not the per-swarm drawer or ended board. It requires Keelson v0.125.0 or later.
-The operator's lane comes first, then agents in first-worked order, then runs.
+The operator's lane comes first once you have posted or answered, then agents in
+first-worked order, then runs.
 Turns use the agent's identity color, with hatching for timeouts or errors and
 open endpoints for unfinished work. Run bars use status colors.
 Marks show spawns (○), questions (?), operator posts and answers (▲), reports
 (▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
-Nudges, caps and retirements keep their existing marks.
+Nudges, caps and retirements keep their existing marks. The legend, here and on
+the record, lists only the marks that timeline draws.
 
 The live window starts at startedAt and its clock runs a quarter past the elapsed
 time, at least 2 minutes (half again, at least 30, for a factory swarm), and never past startedAt + wallClockMs.
@@ -809,7 +811,7 @@ drawer. A row with a report leads with the report's title; any other leads with
 the task, then · and what came of the swarm: the conclusion's first sentence, or why it ended (Stopped by
 you, Out of turns at 40). A done row carries a check and the rest a lifecycle
 chip; ↻ marks a rerun. The trailing names how long it ran, cost, the clock when it ended,
-how many runs verified, and ◧ report.
+how many runs verified, and report.
 
 Requests come in a ladder: decide (a run waits at an approval only the operator
 can answer, because the host refused the workflow under \`ribApprovalGrants\`

@@ -171,7 +171,7 @@ textarea:hover, select:hover, input:hover { border-color: color-mix(in srgb, var
 textarea:focus, select:focus, input:focus { outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
 textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
-textarea::placeholder { color: var(--muted); opacity: .75; }
+textarea::placeholder { color: var(--muted); opacity: 1; }
 .task-hint { margin-top: 8px; }
 .task-hint:empty { display: none; }
 .plans { margin-top: 20px; }
@@ -510,11 +510,11 @@ const PAGE_SCRIPT = `
     });
     const planCells = document.getElementById("models-" + size);
     if (planCells) {
-      modelSelect.options[0].textContent = planCells.dataset.lead + " · plan";
-      workerSelect.options[0].textContent = planCells.dataset.worker + " · plan";
+      modelSelect.options[0].textContent = planCells.dataset.lead;
+      workerSelect.options[0].textContent = planCells.dataset.worker;
     }
     const planBudget = (factory ? factoryBudgets : budgets)[size];
-    document.getElementById("launch-cost").placeholder = planBudget.slice(planBudget.lastIndexOf("$")).split(/[s·]/)[0] + " · plan";
+    document.getElementById("launch-cost").placeholder = planBudget.slice(planBudget.lastIndexOf("$")).split(/[s·]/)[0].trim();
     document.getElementById("launch-summary").textContent = summary();
     document.getElementById("launch-models").textContent = model && worker
       ? (model === worker ? " on " + model : " on " + model + " and " + worker)
@@ -962,8 +962,8 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
       </section>
       <div class="pickers">
           <div><label for="launch-model">Lead model</label><select id="launch-model" name="model"><option value="" selected>the plan's lead</option>${modelOptions}<option value="other">Other…</option></select><div class="other-model" id="other-model-row" hidden><label for="launch-other-model">Model name</label><input id="launch-other-model" type="text" autocomplete="off"></div><p class="hint detail" id="model-error" role="alert" hidden></p></div>
-          <div><label for="launch-cost">Cost ceiling</label><input id="launch-cost" name="max_cost_usd" type="number" min="${START_BOUNDS.maxCostUsd.min}" max="${START_BOUNDS.maxCostUsd.max}" step="any" inputmode="decimal" placeholder="the plan's" aria-describedby="cost-hint"><p class="hint detail" id="cost-hint">List-price US dollars; the swarm ends at it.</p></div>
           <div><label for="launch-worker-model">Workers model</label><select id="launch-worker-model" name="worker_model"><option value="" selected>the plan's workers</option>${modelOptions}</select></div>
+          <div><label for="launch-cost">Cost ceiling</label><input id="launch-cost" name="max_cost_usd" type="number" min="${START_BOUNDS.maxCostUsd.min}" max="${START_BOUNDS.maxCostUsd.max}" step="any" inputmode="decimal" placeholder="the plan's" aria-describedby="cost-hint"><p class="hint detail" id="cost-hint">The plan's ceiling until you type one, in US dollars at list price. The swarm stops at it.</p></div>
           <div class="project-row" id="project-row"><label for="launch-project">Project</label><select id="launch-project" name="project" aria-describedby="project-note">
             <option value="" selected>No project · chat only</option>${options}${state.canCreateProject ? '<option value="new">New project…</option>' : ""}
           </select></div>

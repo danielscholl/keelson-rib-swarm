@@ -100,6 +100,23 @@ const MARKS: Partial<Record<NonNullable<ActivityEntry["kind"]>, string>> = {
   retire: "✕",
 };
 
+const LEGEND: readonly (readonly [string, string])[] = [
+  ["○", "spawned"],
+  ["?", "asked you"],
+  ["▲", "you"],
+  ["▪", "report"],
+  ["●", "conclusion"],
+  ["◇", "gate opened"],
+  ["◆", "gate answered"],
+  ["✓", "verified"],
+];
+
+// Only the marks a timeline actually draws.
+export function legendKeys(glyphs: Iterable<string>): string[] {
+  const drawn = new Set(glyphs);
+  return LEGEND.filter(([glyph]) => drawn.has(glyph)).map(([glyph, label]) => `${glyph} ${label}`);
+}
+
 export function esc(text: string): string {
   return text
     .replaceAll("&", "&amp;")
@@ -146,7 +163,7 @@ p { margin: 0 0 6px; }
 code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
 .mono { font-variant-numeric: tabular-nums; font-size: 13px; }
 .eyebrow { font-size: 12.5px; color: var(--muted); margin: 0; }
-.meta, .note { color: var(--muted); font-size: 12.5px; }
+.meta, .note { color: color-mix(in srgb, var(--fg) 55%, var(--muted)); font-size: 12.5px; }
 .key { white-space: nowrap; }
 .lede { margin: 0 0 8px; color: var(--fg); font-size: 14px; }
 .scroll { overflow-x: auto; }
@@ -444,7 +461,8 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
   const f = frameOf(s, composedAt);
   const model = buildTimelineModel(s);
   const heard = model.marks.some((m) => m.lane === "operator");
-  const all = heard ? model.lanes : model.lanes.filter((l) => l.kind !== "operator");
+  const others = model.lanes.filter((l) => l.kind !== "operator");
+  const all = heard || others.length === 0 ? model.lanes : others;
   const index = new Map(all.map((l, i) => [l.id, i]));
   const height = laneY(all, all.length - 1) + LANE + GAP + 4;
   const mid = (i: number) => laneY(all, i) + LANE / 2 + 4;
@@ -531,21 +549,29 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
   }
 
   const svg = `<svg viewBox="0 0 ${W} ${height + 14}" role="img" aria-label="Timeline: turns by agent and runs over time">${parts.join("")}</svg>`;
-  const keys = [
-    "○ spawned",
-    "? asked you",
-    "▲ you",
-    "▪ report",
-    "● conclusion",
-    "◇ gate opened",
-    "◆ gate answered",
-    "✓ verified",
-  ];
-  const legend = `Bars are turns in each agent's color, hatched when a turn timed out or failed, dashed while running. ${keys.map((k) => `<span class="key">${k}</span>`).join(" · ")}.`;
+  const keys = legendKeys(model.marks.filter((m) => index.has(m.lane)).map((m) => m.glyph));
+  const turnSpans = model.spans.filter((t) => t.kind === "turn" && index.has(t.lane));
+  const bars = [
+    "Bars are turns in each agent's color",
+    ...(turnSpans.some((t) => t.hatched) ? ["hatched when a turn timed out or failed"] : []),
+    ...(turnSpans.some((t) => !t.to) ? ["dashed while running"] : []),
+  ].join(", ");
+  const legend = `${bars}.${keys.length ? ` ${keys.map((k) => `<span class="key">${k}</span>`).join(" · ")}.` : ""}`;
   const missing = s.spans?.length
     ? ""
     : `<p class="note">This swarm was recorded before turns were kept, so the lanes carry its events and runs only.</p>`;
   return `<section><h2>Timeline</h2>${missing}<div class="scroll">${svg}</div><p class="note">${legend}</p></section>`;
+}
+
+// A spawn count beside its line, pushed off it along the normal so the line never strikes it.
+function spawnLabel(x1: number, y1: number, x2: number, y2: number, label: string): string {
+  const len = Math.hypot(x2 - x1, y2 - y1) || 1;
+  const side = x2 >= x1 ? 1 : -1;
+  const nx = (side * (y2 - y1)) / len;
+  const ny = (-side * (x2 - x1)) / len;
+  const x = x1 + (x2 - x1) * 0.6 + nx * 11;
+  const y = y1 + (y2 - y1) * 0.6 + ny * 11 + 3.5;
+  return `<text class="count" x="${num(x)}" y="${num(y)}" text-anchor="middle">${label}</text>`;
 }
 
 // ---- Who woke whom: agents as nodes, edges for spawns, wakes and questions. ----
@@ -702,15 +728,26 @@ function whoWokeWhom(s: SwarmSummary): string {
       const cy = sy + 12 + ((right.x - left.x) / (W / 4)) * 28 + (near ? 0 : 20);
       const apex = (sy + cy) / 2;
       const n = (rightward?.n ?? 0) + (leftward?.n ?? 0);
-      const text =
-        rightward && leftward
-          ? rightward.n === leftward.n
-            ? `×${rightward.n} ⇄`
-            : `×${rightward.n} → ← ×${leftward.n}`
-          : `×${n}`;
+      const curve = (t: number) => ({
+        x: (1 - t) ** 2 * sx + 2 * t * (1 - t) * ((sx + tx) / 2) + t ** 2 * tx,
+        y: (1 - t) ** 2 * sy + 2 * t * (1 - t) * cy + t ** 2 * sy,
+      });
+      const below = (t: number, text: string) => {
+        const p = curve(t);
+        return `<text class="count" x="${num(p.x)}" y="${num(p.y + 14)}" text-anchor="middle">${text}</text>`;
+      };
+      // Unequal counts sit by the arrowhead they belong to.
+      const labels =
+        rightward && leftward && rightward.n !== leftward.n
+          ? [below(0.8, `×${rightward.n}`), below(0.2, `×${leftward.n}`)]
+          : near
+            ? [
+                `<text class="count" x="${num((sx + tx) / 2)}" y="${num(apex - 5)}" text-anchor="middle">${rightward && leftward ? `×${rightward.n} ⇄` : `×${n}`}</text>`,
+              ]
+            : [below(0.5, rightward && leftward ? `×${rightward.n} ⇄` : `×${n}`)];
       parts.push(
         `<path class="edge" d="M${num(sx)} ${num(sy)}Q${num((sx + tx) / 2)} ${num(cy)} ${num(tx)} ${num(sy)}" stroke-width="1.4"${rightward ? ' marker-end="url(#arrow)"' : ""}${leftward ? ' marker-start="url(#arrow)"' : ""}/>`,
-        `<text class="count" x="${num((sx + tx) / 2)}" y="${num(near ? apex - 5 : apex + 14)}" text-anchor="middle">${text}</text>`,
+        ...labels,
       );
       continue;
     }
@@ -728,11 +765,7 @@ function whoWokeWhom(s: SwarmSummary): string {
       const ty = b.y - 4;
       parts.push(
         `<line class="edge spawn" x1="${num(x1)}" y1="${num(sy)}" x2="${num(x2)}" y2="${num(ty)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
-        ...(label
-          ? [
-              `<text class="count" x="${num(x1 + (x2 - x1) * 0.7 + 8)}" y="${num(sy + (ty - sy) * 0.7 + 3.5)}">${label}</text>`,
-            ]
-          : []),
+        ...(label ? [spawnLabel(x1, sy, x2, ty, label)] : []),
       );
       continue;
     }
@@ -777,7 +810,7 @@ function whoWokeWhom(s: SwarmSummary): string {
     );
   }
   const svg = `<svg viewBox="0 0 ${W} ${num(height)}" role="img" aria-label="Who woke whom">${parts.join("")}</svg>`;
-  return `<section><h2>Who woke whom</h2><div class="scroll">${svg}</div><p class="note">A straight arrow is a spawn; a curve counts the turns one side's messages or run updates started (×n, ⇄ when both ways match); a dashed curve is a question to you. The task's kickoff and idle nudges are left out.</p></section>`;
+  return `<section><h2>Who woke whom</h2><div class="scroll">${svg}</div><p class="note">A straight arrow is a spawn; a curve counts the turns one side's messages or run updates started (×n by the arrowhead it counts, ⇄ when both ways match); a dashed curve is a question to you. The task's kickoff and idle nudges are left out.</p></section>`;
 }
 
 // ---- Spend, runs, and the evidence the agents were given. ----
@@ -892,7 +925,7 @@ function header(s: SwarmSummary): string {
     `started ${day(s.startedAt)} ${hhmm(s.startedAt)}`,
     ...(s.rerunOf ? [`reruns ${s.rerunOf}`] : []),
   ];
-  return `<header><p class="eyebrow">Swarm ${esc(s.id)} · record</p><h1>${esc(head)}</h1>${rest ? `<p class="lede">${esc(cut(rest, 600))}</p>` : ""}<p class="meta">${esc(facts.join(" · "))}</p></header>`;
+  return `<header><h1>${esc(head)}</h1>${rest ? `<p class="lede">${esc(cut(rest, 600))}</p>` : ""}<p class="meta">${esc(facts.join(" · "))}</p></header>`;
 }
 
 function provenance(s: SwarmSummary, composedAt: Date): string {

@@ -61,7 +61,7 @@ export function gist(markdown: string, max: number): string {
   if (sentence.length <= max) return sentence;
   const cut = sentence.slice(0, max - 1);
   const word = cut.lastIndexOf(" ");
-  return `${(word > max / 2 ? cut.slice(0, word) : cut).replace(/[\s,;:]+$/, "")}…`;
+  return `${(word > max / 2 ? cut.slice(0, word) : cut).replace(/[\s.,;:]+$/, "")}…`;
 }
 
 // The first line of a task, cut to fit a card title.
@@ -78,7 +78,7 @@ export function taskHead(task: string, max = 72): string {
   if (head.length <= max) return head;
   const cut = head.slice(0, max - 1);
   const space = cut.lastIndexOf(" ");
-  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, "")}…`;
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:]+$/, "")}…`;
 }
 
 // Inside a swarm's own views the id is already named, so handles drop it.
@@ -141,17 +141,17 @@ export function activityText(swarmId: string, text: string): string {
 }
 
 // Field text renders as is: links and HTML stay literal, not clickable markup.
-// A preview row: no leading @addresses, message ids, or the author's own "name:" label, cut at a word.
+// A preview row: no leading @addresses, message ids, or the author's own name as a label, cut at a word.
 export function messageLine(swarmId: string, text: string, max = 120, author?: string): string {
   let line = firstLine(plain(activityText(swarmId, text)), 1000)
     .replace(/\s*\(?\bmsg_[a-z0-9]+\)?/gi, "")
     .replace(/^(?:@[\w.-]+[,:]?\s+)+/, "");
-  const self = author ? line.match(/^@?([\w.-]+):\s+/) : null;
+  const self = author ? line.match(/^@?([\w.-]+)(?::\s+|\s+(?=[\w-]+:\s))/) : null;
   if (self && self[1]?.toLowerCase() === author?.toLowerCase()) line = line.slice(self[0].length);
   if (line.length <= max) return line;
   const cut = line.slice(0, max - 1);
   const space = cut.lastIndexOf(" ");
-  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, "")}…`;
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:]+$/, "")}…`;
 }
 
 // An activity line under its actor's chip: the handle or "you" it starts with

@@ -80,12 +80,14 @@ Model column, since the shape block names the models.
 
 Timeline is a native section in the Timeline tab beside Map, on the live cockpit only,
 not the per-swarm drawer or ended board. It requires Keelson v0.125.0 or later.
-The operator's lane comes first, then agents in first-worked order, then runs.
+The operator's lane comes first once you have posted or answered, then agents in
+first-worked order, then runs.
 Turns use the agent's identity color, with hatching for timeouts or errors and
 open endpoints for unfinished work. Run bars use status colors.
 Marks show spawns (○), questions (?), operator posts and answers (▲), reports
 (▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
-Nudges, caps and retirements keep their existing marks.
+Nudges, caps and retirements keep their existing marks. The legend, here and on
+the record, lists only the marks that timeline draws.
 
 The live window starts at `startedAt` and its clock runs a quarter past the
 elapsed time, at least 2 minutes (half again, at least 30, for a factory
@@ -364,7 +366,7 @@ A done row carries a check; stopped, stalled, out of budget and failed rows
 carry a chip, so the ones that did not finish stand out. ↻ marks a swarm
 started with **Retry** or **Go deeper**. The trailing names how
 long it ran, its cost, when it ended, how many of its runs verified, and
-**◧ report** when a report exists. The index shows the latest eight, and the
+**report** when a report exists. The index shows the latest eight, and the
 last row opens the rest in the same day groups. The rib keeps the last 50 in
 its data directory, so they survive a restart.
 
@@ -550,7 +552,7 @@ reads Keelson's canvas design guide first, and the page follows the same rules
 as Keelson's canvas artifacts, so it matches the app's theme in light and dark.
 The cockpit offers **Open the report** once the page exists, even while the
 swarm is still running. A folded card offers **Report**, and an ended row marks
-it with **◧ report**. The lead skips the report when the whole answer fits in a
+it with **report**. The lead skips the report when the whole answer fits in a
 sentence or two.
 
 **Read the draft** opens the reading pane with the lead's refused draft and

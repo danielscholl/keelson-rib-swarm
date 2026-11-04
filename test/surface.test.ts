@@ -746,6 +746,12 @@ describe("message lines", () => {
     expect(messageLine("s1", "x".repeat(130))).toBe(`${"x".repeat(119)}…`);
     expect(messageLine("s1", "keys: posts crossed", 120, "keys")).toBe("posts crossed");
     expect(messageLine("s1", "keys: posts crossed", 120, "lead")).toBe("keys: posts crossed");
+    expect(messageLine("s1", "keys correction: take cls", 120, "keys")).toBe(
+      "correction: take cls",
+    );
+    expect(messageLine("s1", `${"word ".repeat(10)}through. more text`, 62)).toBe(
+      `${"word ".repeat(10)}through…`,
+    );
     expect(messageLine("s1", "x".repeat(20), 10)).toBe(`${"x".repeat(9)}…`);
   });
 });
@@ -2206,7 +2212,7 @@ describe("the live cockpit", () => {
         { lane: s.runs![0]!.runId, at: T0, glyph: "◇", title: `approve-plan opened ${hhmm(T0)}` },
         { lane: "operator", at: T0, glyph: "▲", title: `${hhmm(T0)} you posted` },
       ],
-      legend: expect.stringContaining("○ spawned"),
+      legend: "Bars are turns. ▲ you · ◇ gate opened",
     });
     const endedAt = new Date(Date.parse(T0) + 60_000).toISOString();
     expect(
@@ -3325,7 +3331,7 @@ describe("Swarms boards", () => {
       }),
     );
     expect(again.text).toBe("↻ Cold start timeout fix");
-    expect(again.trailing?.endsWith("· ◧ report")).toBe(true);
+    expect(again.trailing?.endsWith("· report")).toBe(true);
     const said = endedRow(
       swarm("s2say", {
         status: "done",
@@ -6074,6 +6080,7 @@ describe("the record page", () => {
           messages: 1,
           wokeBy: ["rib"],
         })),
+        activity: [{ at: at(0), text: "you posted", kind: "operator", actor: "operator" }],
         runs: [
           run("rlanes", {
             gates: [{ nodeId: "approve-plan", openedAt: at(1), closedAt: at(2), by: "operator" }],
@@ -6086,12 +6093,12 @@ describe("the record page", () => {
         ["operator", ...agents.map((agent) => agent.id), s.runs![0]!.runId].slice(0, 12),
       );
       expect(native.title).toBe(
-        count === 12 ? "Timeline" : "Timeline · 12/13 lanes · 11/12 spans · 0/2 marks",
+        count === 12 ? "Timeline" : "Timeline · 12/13 lanes · 11/12 spans · 1/3 marks",
       );
       const ids = new Set(native.lanes.map((lane) => lane.id));
       for (const item of [...native.spans, ...native.marks]) expect(ids.has(item.lane)).toBe(true);
       expect(native.spans).toHaveLength(11);
-      expect(native.marks).toHaveLength(count === 12 ? 2 : 0);
+      expect(native.marks).toHaveLength(count === 12 ? 3 : 1);
     },
   );
 
@@ -6235,13 +6242,12 @@ describe("the record page", () => {
     expect(model.lanes).toHaveLength(25);
     expect(model.spans).toHaveLength(212);
     expect(model.marks).toHaveLength(259);
-    expect(native.lanes.map((lane) => lane.id)).toEqual([
-      "operator",
-      ...agents.slice(0, 11).map((agent) => agent.id),
-    ]);
-    expect(native.spans).toHaveLength(184);
-    expect(native.marks).toHaveLength(192);
-    expect(native.title).toBe("Timeline · 12/25 lanes · 184/212 spans · 192/259 marks");
+    expect(native.lanes.map((lane) => lane.id)).toEqual(
+      agents.slice(0, 12).map((agent) => agent.id),
+    );
+    expect(native.spans).toHaveLength(200);
+    expect(native.marks).toHaveLength(200);
+    expect(native.title).toBe("Timeline · 12/24 lanes · 200/212 spans · 200/259 marks");
     const ids = new Set(native.lanes.map((lane) => lane.id));
     for (const item of [...native.spans, ...native.marks]) {
       expect(ids.has(item.lane)).toBe(true);
@@ -6297,7 +6303,9 @@ describe("the record page", () => {
       data: { effect: "open-canvas", key: recordKey(done.id), title: "Record · s6rec" },
     });
     await Bun.sleep(10);
-    expect(sm.frames.get(recordKey(done.id))?.at(-1)).toContain("Swarm s6rec · record");
+    expect(sm.frames.get(recordKey(done.id))?.at(-1)).toContain(
+      "<h1>Fix issue #27: README undercounts frontend-mix nodes</h1>",
+    );
     expect(
       (await handleSwarmsAction({ type: "open-record", payload: { id: "s0none" } }, actionDeps)).ok,
     ).toBe(false);

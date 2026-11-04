@@ -435,7 +435,7 @@ describe("contributed docs", () => {
         "on the live cockpit only",
         "not the per-swarm drawer or ended board",
         "Keelson v0.125.0 or later",
-        "operator's lane comes first, then agents in first-worked order, then runs",
+        "operator's lane comes first once you have posted or answered, then agents in first-worked order, then runs",
         "agent's identity color",
         "hatching for timeouts or errors",
         "open endpoints for unfinished work",
