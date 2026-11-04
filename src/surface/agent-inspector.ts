@@ -51,7 +51,11 @@ function wakeSources(s: SwarmSummary, t: TurnSpan): string {
 
 function turnText(s: SwarmSummary, t: TurnSpan): string {
   const active = isLive(s.status) && !s.endedAt && !t.endedAt;
-  return `Turn ${t.n} · ${day(t.startedAt)} ${hhmm(t.startedAt)} → ${t.endedAt ? hhmm(t.endedAt) : active ? "in progress" : "end not recorded"} · ${t.outcome ?? (active ? "running" : "outcome not recorded")}${t.endedAt ? ` · took ${span(t.startedAt, t.endedAt)}` : ""}`;
+  const sameMinute = t.endedAt && hhmm(t.endedAt) === hhmm(t.startedAt);
+  const when = sameMinute
+    ? `${day(t.startedAt)} ${hhmm(t.startedAt)}`
+    : `${day(t.startedAt)} ${hhmm(t.startedAt)} → ${t.endedAt ? hhmm(t.endedAt) : active ? "in progress" : "end not recorded"}`;
+  return `Turn ${t.n} · ${when} · ${t.outcome ?? (active ? "running" : "outcome not recorded")}${t.endedAt ? ` · took ${span(t.startedAt, t.endedAt)}` : ""}`;
 }
 
 export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView {
@@ -131,7 +135,7 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
               : {
                   value: a.turns,
                   total: s.limits.maxTurnsPerAgent,
-                  label: "Worker turns used",
+                  label: "Turns used",
                   trailing: `${a.turns} of ${s.limits.maxTurnsPerAgent}`,
                 },
             fields: [

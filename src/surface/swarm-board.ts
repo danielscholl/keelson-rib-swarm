@@ -600,6 +600,8 @@ function agentCard(
     ? plural(a.turns, "turn")
     : `${a.turns} of ${s.limits.maxTurnsPerAgent} turns`;
   const last = [...(s.activity ?? [])].reverse().find((e) => e.actor === a.id);
+  // An ended bench reads as a summary, so every card states its turns the same way.
+  const metered = live(s) && !a.lead;
   const foot = [
     ...(last
       ? [
@@ -616,17 +618,16 @@ function agentCard(
   ];
   return {
     title: shortHandle(a.handle, s.id),
-    titleTone: a.tone,
     action: { type: "select-agent", payload: { id: s.id, agentId: a.id } },
     ...(a.id === selectedAgentId ? { selected: true } : {}),
     ...(live(s) ? { pill: AGENT_PILL[a.status] } : {}),
-    ...(a.lead
-      ? {}
-      : { bar: { value: a.turns, total: s.limits.maxTurnsPerAgent, trailing: turns } }),
+    ...(metered
+      ? { bar: { value: a.turns, total: s.limits.maxTurnsPerAgent, trailing: turns } }
+      : {}),
     prose: true,
     fields: [
       { value: firstLine(a.role, 64) },
-      ...(a.lead
+      ...(!metered
         ? [{ value: tokens ? `${turns} · ${tokens}` : turns }]
         : tokens
           ? [{ value: tokens }]
@@ -865,10 +866,10 @@ function costKinds(s: SwarmSummary) {
 // The Usage page's order (cache read, input, cache write, output) on one ramp.
 function kindSegments(kinds: NonNullable<ReturnType<typeof costKinds>>): Segment[] {
   return [
-    { label: `cache read ${usd(kinds.read)}`, n: kinds.read, tone: "ramp-1" as const },
-    { label: `input ${usd(kinds.input)}`, n: kinds.input, tone: "ramp-2" as const },
-    { label: `cache write ${usd(kinds.write)}`, n: kinds.write, tone: "ramp-3" as const },
-    { label: `output ${usd(kinds.output)}`, n: kinds.output, tone: "ramp-4" as const },
+    { label: `cache read ${usd(kinds.read)}`, n: kinds.read, tone: "ramp-2" as const },
+    { label: `input ${usd(kinds.input)}`, n: kinds.input, tone: "ramp-3" as const },
+    { label: `cache write ${usd(kinds.write)}`, n: kinds.write, tone: "ramp-4" as const },
+    { label: `output ${usd(kinds.output)}`, n: kinds.output, tone: "ramp-5" as const },
   ].filter((k) => k.n > 0);
 }
 
@@ -1371,13 +1372,16 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
 // A deadline axis would squash every turn into the left edge, so the axis runs
 // a little past now and grows as the swarm does; the Time meter keeps the deadline.
 const FACTORY_AXIS_MS = 30 * 60_000;
-const LIVE_AXIS_MS = 5 * 60_000;
+const LIVE_AXIS_MS = 60_000;
 function timelineUntil(s: SwarmSummary, now: Date): string {
   const start = Date.parse(s.startedAt);
   const clock = start + s.limits.wallClockMs;
   const step = s.factory ? FACTORY_AXIS_MS : LIVE_AXIS_MS;
   const elapsed = Math.max(0, now.getTime() - start);
-  const span = Math.max(step, Math.ceil((elapsed * 1.5) / step) * step);
+  const span = Math.max(
+    s.factory ? step : 2 * step,
+    Math.ceil((elapsed * (s.factory ? 1.5 : 1.25)) / step) * step,
+  );
   return new Date(Math.min(clock, start + span)).toISOString();
 }
 
@@ -1444,7 +1448,7 @@ export function buildCockpit(
     titled: boolean;
     now?: Date;
     selectedAgentId?: string;
-    // The page already shows this swarm's requests, so the state line would repeat them.
+    // The page already shows this swarm's requests, so the state line and pill would repeat them.
     asksAbove?: boolean;
   },
 ): Section[] {
@@ -1466,8 +1470,9 @@ export function buildCockpit(
       items: [
         {
           title: `${taskHead(s.task)} · ${s.id}`,
-          pill: needs.length ? { label: "needs you", tone: "caution" } : livePill(s),
-          ...(needs.length ? { edge: "caution" as const } : {}),
+          pill:
+            needs.length && !opts.asksAbove ? { label: "needs you", tone: "caution" } : livePill(s),
+          ...(needs.length && !opts.asksAbove ? { edge: "caution" as const } : {}),
           ...(people.length ? { fields: [{ people }] } : {}),
         },
       ],

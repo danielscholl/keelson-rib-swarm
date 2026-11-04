@@ -170,18 +170,18 @@ textarea, select, input { display: block; width: 100%; border: 1px solid var(--b
 textarea:hover, select:hover, input:hover { border-color: color-mix(in srgb, var(--fg) 22%, var(--border)); }
 textarea:focus, select:focus, input:focus { outline: none; border-color: var(--accent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
-textarea { resize: vertical; min-height: 112px; line-height: 1.5; }
+textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
 textarea::placeholder { color: var(--muted); opacity: 1; }
 .task-hint { margin-top: 8px; }
 .task-hint:empty { display: none; }
-.plans { margin-top: 24px; }
+.plans { margin-top: 20px; }
 .plans-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .eyebrow { font-size: 13px; font-weight: 600; color: var(--fg-strong); }
 .plan-title .chip { padding: 2px 8px; border: 0; border-radius: 999px; font: 600 11px/1.4 var(--sans);
   color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .chevron { display: inline-block; margin-left: 6px; }
 .plan-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.plan { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 18px;
+.plan { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 16px;
   border-radius: 12px; background: transparent; color: var(--fg); transition: border-color .12s ease, background .12s ease; }
 .plan[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent);
   background: color-mix(in srgb, var(--accent) 6%, transparent); }
@@ -198,13 +198,13 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .plan-models .role { font-family: var(--sans); font-size: 12px; color: var(--muted); }
 .plan-models .model { color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plan-models .model.is-picked { color: var(--accent); font-weight: 600; }
-.pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 .detail { margin-top: 10px; line-height: 1.5; }
 .other-model { margin-top: 12px; }
 .project-note { margin-top: 10px; }
 .project-note:empty { display: none; }
 .new-project { margin-top: 16px; display: grid; gap: 12px; }
-.access { margin-top: 24px; }
+.access { margin-top: 20px; }
 .access-heading { font-size: 13px; font-weight: 600; color: var(--fg-strong); margin: 0 0 8px; }
 .access-row { display: grid; grid-template-columns: 44px minmax(150px, 1fr) minmax(240px, 2fr);
   gap: 14px; align-items: center; padding: 16px 0; border-top: 1px solid var(--border); }
@@ -233,6 +233,7 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .workflow-input { width: 100%; min-width: 0; margin-top: 10px; padding: 8px 10px;
   border: 1px dashed var(--border); border-radius: 10px; color: var(--fg); background: transparent; }
 .workflow-input::placeholder { color: var(--muted); opacity: 1; }
+#launch-cost::placeholder { color: var(--fg); opacity: 1; }
 .workflow-error { color: var(--fg); margin-top: 8px; }
 .workflow-count { margin-top: 8px; }
 footer { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 18px 24px 24px; border-top: 1px solid var(--border); }
@@ -955,7 +956,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
   <form id="launch-form" data-nonce="${esc(nonce)}" data-can-create-project="${Boolean(state.canCreateProject)}" data-can-init-tracker="${Boolean(state.canInitTracker)}" data-provider="${esc(state.provider ?? "")}" data-providers="${esc(JSON.stringify(catalog.map((c) => c.provider)))}" data-budgets="${esc(JSON.stringify(budgets))}" data-factory-budgets="${esc(JSON.stringify(factoryBudgets))}">
     <div class="fields">
       <label for="launch-task">Task</label>
-      <textarea id="launch-task" name="task" rows="4" required aria-describedby="task-hint" placeholder="${esc(TASK_PLACEHOLDER)}"></textarea>
+      <textarea id="launch-task" name="task" rows="3" required aria-describedby="task-hint" placeholder="${esc(TASK_PLACEHOLDER)}"></textarea>
       <p class="hint task-hint" id="task-hint" aria-live="polite"></p>
       <section class="plans" id="plans" aria-labelledby="plans-heading">
         <div class="plans-heading"><span class="eyebrow" id="plans-heading">Size</span><span class="factory-toggle" id="factory-row"><span id="factory-label">Factory mode</span><button class="more factory-info" id="factory-info" type="button" aria-label="About Factory mode" aria-controls="factory-hint" aria-expanded="false" title="${esc(FACTORY_MEANING)}">ⓘ</button><button class="switch" id="launch-factory" type="button" role="switch" aria-labelledby="factory-label" aria-describedby="factory-meaning" aria-checked="false"></button></span></div>

@@ -576,7 +576,8 @@ more. Each card leads with the request (Review the plan for …, @planner asks,
 with the question below it, Crew is at $32.00 of its $40.00 cost ceiling, ClickClack stopped answering,
 No agent has worked since …) and its verb (Review plan, Read question, Raise to
 $60.00, Open swarm, Message the lead). The task and swarm
-id sit in the footnote; a question's title carries the swarm id instead. Open swarm expands that live swarm on the page.
+id sit in the footnote; a question's title carries the swarm id instead, and
+its first button is Reply, since the question is already on the card. Open swarm expands that live swarm on the page.
 
 The expanded live swarm is a cockpit on the page, not in the drawer. It runs:
 the task and id with a lifecycle or needs-you pill and the crew as faces; a
@@ -615,8 +616,8 @@ Marks show spawns (○), questions (?), operator posts and answers (▲), report
 (▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
 Nudges, caps and retirements keep their existing marks.
 
-The live window starts at startedAt and its clock runs to half again the elapsed
-time, at least 5 minutes (30 for a factory swarm), and never past startedAt + wallClockMs.
+The live window starts at startedAt and its clock runs a quarter past the elapsed
+time, at least 2 minutes (half again, at least 30, for a factory swarm), and never past startedAt + wallClockMs.
 When endedAt is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.

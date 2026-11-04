@@ -32,6 +32,7 @@ import {
   shortHandle,
   shortRun,
   span,
+  taskHead,
 } from "./format.ts";
 import { LIFECYCLE, sizeWord } from "./parts.ts";
 
@@ -57,7 +58,7 @@ const MAX_TICKS = 8;
 const MINUTE = 60_000;
 const NODE_W = 96;
 const NODE_H = 26;
-const LAYER = 84;
+const LAYER = 110;
 const PER_ROW = 6;
 const MAX_EDGES = 40;
 
@@ -146,6 +147,7 @@ code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1
 .mono { font-variant-numeric: tabular-nums; font-size: 13px; }
 .eyebrow { font-size: 12.5px; color: var(--muted); margin: 0; }
 .meta, .note { color: var(--muted); font-size: 12.5px; }
+.lede { margin: 0 0 8px; color: var(--fg); font-size: 14px; }
 .scroll { overflow-x: auto; }
 svg { display: block; width: 100%; min-width: 640px; height: auto; }
 svg text { font: 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; fill: var(--muted); }
@@ -159,7 +161,8 @@ svg .mk text { font-size: 12px; fill: var(--fg-strong); text-anchor: middle;
 svg .hatch { fill: url(#hatch); }
 svg .hatchline { stroke: var(--crit); stroke-width: 1.2; }
 svg .open { stroke: var(--fg); stroke-dasharray: 2 2; stroke-width: 1; }
-svg .edge { stroke: var(--muted); fill: none; opacity: .55; }
+svg .edge { stroke: var(--muted); fill: none; opacity: .75; }
+svg .spawn { opacity: .4; }
 svg .asked { stroke-dasharray: 4 3; }
 svg .arrow { fill: var(--muted); }
 svg .node { fill: var(--card); stroke-width: 1.5; }
@@ -178,7 +181,7 @@ svg .count { font-size: 10.5px; fill: var(--muted);
 .c-neu { color: var(--muted); }
 .spend + .note { margin-top: 8px; }
 .spend { display: grid; grid-template-columns: max-content 1fr auto; gap: 8px 14px; align-items: center; }
-.spend > .mono:last-child, .spend > span:nth-child(3n) { color: var(--muted); }
+.spend > .mono:last-child, .spend > span:nth-child(3n) { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 .spend > span:first-child, .spend > .mono { white-space: nowrap; }
 .who { color: var(--fg); white-space: nowrap; }
 .who i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 7px; }
@@ -634,7 +637,10 @@ function whoWokeWhom(s: SwarmSummary): string {
   }
   const nodes = place(s, graphEdges);
   const at = new Map(nodes.map((n) => [n.id, n]));
-  const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + 34;
+  const sameRow = graphEdges.some(
+    (e) => e.kind !== "spawned" && at.get(e.from)?.y === at.get(e.to)?.y,
+  );
+  const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + (sameRow ? 84 : 34);
   const parts: string[] = [
     `<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0L8 4L0 8z"/></marker></defs>`,
   ];
@@ -660,7 +666,7 @@ function whoWokeWhom(s: SwarmSummary): string {
       const sy = a.y + NODE_H + 3;
       const ty = b.y - 4;
       parts.push(
-        `<line class="edge" x1="${num(x1)}" y1="${num(sy)}" x2="${num(x2)}" y2="${num(ty)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
+        `<line class="edge spawn" x1="${num(x1)}" y1="${num(sy)}" x2="${num(x2)}" y2="${num(ty)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
         ...(label
           ? [
               `<text class="count" x="${num((x1 + x2) / 2 + 8)}" y="${num((sy + ty) / 2 + 3.5)}">${label}</text>`,
@@ -672,9 +678,11 @@ function whoWokeWhom(s: SwarmSummary): string {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const len = Math.max(1, Math.hypot(dx, dy));
-    const bend = e.from < e.to ? 26 : -26;
+    // Peers on one row talk below it, one track per direction, clear of the spawn lines above.
+    const flat = Math.abs(dy) < 1;
+    const bend = flat ? 0 : e.from < e.to ? 40 : -40;
     const cx = (x1 + x2) / 2 + (-dy / len) * bend;
-    const cy = (y1 + y2) / 2 + (dx / len) * bend;
+    const cy = flat ? y1 + (e.from < e.to ? 44 : 76) : (y1 + y2) / 2 + (dx / len) * bend;
     const shrink = (x: number, y: number, towardX: number, towardY: number) => {
       const ux = towardX - x;
       const uy = towardY - y;
@@ -694,7 +702,9 @@ function whoWokeWhom(s: SwarmSummary): string {
     const my = 0.25 * (sy as number) + 0.5 * cy + 0.25 * (ty as number);
     parts.push(
       `<path class="edge${e.kind === "asked" ? " asked" : ""}" d="M${num(sx as number)} ${num(sy as number)}Q${num(cx)} ${num(cy)} ${num(tx as number)} ${num(ty as number)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
-      `<text class="count" x="${num(mx + (-dy / len) * Math.sign(bend) * 9)}" y="${num(my + (dx / len) * Math.sign(bend) * 9 + 3.5)}" text-anchor="middle">${label}</text>`,
+      flat
+        ? `<text class="count" x="${num(mx)}" y="${num(my + 14)}" text-anchor="middle">${label}</text>`
+        : `<text class="count" x="${num(mx + (-dy / len) * Math.sign(bend) * 9)}" y="${num(my + (dx / len) * Math.sign(bend) * 9 + 3.5)}" text-anchor="middle">${label}</text>`,
     );
   }
   for (const n of nodes) {
@@ -805,6 +815,9 @@ function headerCost(s: SwarmSummary): string[] {
 }
 
 function header(s: SwarmSummary): string {
+  const line = firstLine(s.task, 1000);
+  const head = taskHead(s.task, 200);
+  const rest = head.endsWith("…") ? "" : line.slice(head.length).trim();
   const took = span(s.startedAt, s.endedAt);
   const facts = [
     LIFECYCLE[s.status].label,
@@ -816,7 +829,7 @@ function header(s: SwarmSummary): string {
     `started ${day(s.startedAt)} ${hhmm(s.startedAt)}`,
     ...(s.rerunOf ? [`reruns ${s.rerunOf}`] : []),
   ];
-  return `<header><p class="eyebrow">Swarm ${esc(s.id)} · record</p><h1>${esc(cut(firstLine(s.task, 1000), 400))}</h1><p class="meta">${esc(facts.join(" · "))}</p></header>`;
+  return `<header><p class="eyebrow">Swarm ${esc(s.id)} · record</p><h1>${esc(head)}</h1>${rest ? `<p class="lede">${esc(cut(rest, 600))}</p>` : ""}<p class="meta">${esc(facts.join(" · "))}</p></header>`;
 }
 
 function provenance(s: SwarmSummary, composedAt: Date): string {

@@ -2133,7 +2133,7 @@ describe("the live cockpit", () => {
       expect(meters.items.map((b) => b.label)).toEqual(["Turns", "Time", "Fresh tokens", "Cost"]);
       const cost = meters.items[3];
       expect(cost?.total).toBe(60);
-      expect(cost?.segments?.map((x) => x.tone)).toEqual(["ramp-1", "ramp-2", "ramp-4"]);
+      expect(cost?.segments?.map((x) => x.tone)).toEqual(["ramp-2", "ramp-3", "ramp-5"]);
       expect(cost?.segments?.map((x) => x.label.split(" $")[0])).toEqual([
         "cache read",
         "input",
@@ -3184,7 +3184,8 @@ describe("Swarms boards", () => {
     expect(question?.pill).toEqual({ label: "question", tone: "caution" });
     expect(question?.fields?.some((field) => field.href)).toBe(false);
     expect(JSON.stringify(question)).not.toContain("in ClickClack");
-    expect(question?.actions?.[0]).toMatchObject({
+    expect(question?.actions?.[0]).toMatchObject({ type: "reply-ask", tone: "brand" });
+    expect(question?.actions?.[1]).toMatchObject({
       type: "select-ask",
       label: "Read question",
       payload: { id: fixtures.asked!.id, messageId: fixtures.asked!.health!.asks![0]!.messageId },
@@ -3743,7 +3744,7 @@ describe("Swarms boards", () => {
     const cards = endedBench?.kind === "cards" ? endedBench.items : [];
     expect(cards).toHaveLength(2);
     for (const [i, card] of cards.entries()) {
-      expect(card.titleTone).toBe(fixtures.done!.agents[i]!.tone);
+      expect(card.titleTone).toBeUndefined();
       expect(card).not.toHaveProperty("mono");
       expect(card).not.toHaveProperty("stacked");
       expect(card).not.toHaveProperty("ghost");
@@ -4112,7 +4113,7 @@ describe("ended board contract", () => {
     expect(bench.items).toHaveLength(s.agents.length);
     for (const [i, card] of bench.items.entries()) {
       const a = s.agents[i]!;
-      expect(card.titleTone).toBe(a.tone);
+      expect(card.titleTone).toBeUndefined();
       expect(card.action).toEqual({ type: "select-agent", payload: { id: s.id, agentId: a.id } });
       for (const property of ["mono", "stacked", "ghost", "pill"])
         expect(card).not.toHaveProperty(property);
@@ -12038,7 +12039,7 @@ describe("launching from the tab", () => {
         'id="launch-fewer"',
       ])
         expect(page).not.toContain(removed);
-      expect(page).toContain('rows="4" required aria-describedby="task-hint"');
+      expect(page).toContain('rows="3" required aria-describedby="task-hint"');
       expect(page).toContain("resize: vertical");
       expect(page).toContain('for="launch-task"');
       expect(page).toContain('for="launch-project"');

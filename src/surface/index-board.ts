@@ -96,6 +96,11 @@ function reportAction(s: SwarmSummary) {
     : [];
 }
 
+function quiet(action: CanvasActionItem): CanvasActionItem {
+  const { tone: _tone, ...rest } = action;
+  return action.type === "select-ask" ? rest : action;
+}
+
 function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
   const request = requestOf(s, need, server);
   const local = (action: CanvasActionItem): CanvasActionItem =>
@@ -109,7 +114,13 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
       edge: request.pill.tone,
       prose: true,
       fields: [{ value: askGist(need.ask.text, 320) }, ...sinceClock(need)],
-      actions,
+      // The question is already on the card, so answering it is the lead action.
+      actions: [
+        ...actions
+          .filter((x) => x.type === "reply-ask")
+          .map((x) => ({ ...x, tone: "brand" as const })),
+        ...actions.filter((x) => x.type !== "reply-ask").map(quiet),
+      ],
     };
   }
   return {

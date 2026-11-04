@@ -69,7 +69,11 @@ export function firstLine(text: string, max = 72): string {
 export function taskHead(task: string, max = 72): string {
   const line = firstLine(task, 1000);
   const end = line.search(/[.?!]\s/);
-  return firstLine(end >= 16 ? line.slice(0, end + 1) : line, max);
+  const head = end >= 16 ? line.slice(0, end + 1) : line;
+  if (head.length <= max) return head;
+  const cut = head.slice(0, max - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s,;:]+$/, "")}…`;
 }
 
 // Inside a swarm's own views the id is already named, so handles drop it.

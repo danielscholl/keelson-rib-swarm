@@ -28,7 +28,8 @@ names the total in its heading. Each card leads with the request:
   waited (**opened 4 min ago**, **asked 2 min ago**), kept current by a live
   clock
 - the footnote names the task and swarm id; a question's title carries the
-  swarm id instead
+  swarm id instead, and its first button is **Reply**, since the question is
+  already on the card
 - the first button is the request's verb: **Review plan**, **Read question**,
   **Open swarm**, or **Message the lead**; replies and dismissal appear when
   they apply, and **Open swarm** expands the swarm on the page
@@ -85,9 +86,9 @@ Marks show spawns (○), questions (?), operator posts and answers (▲), report
 (▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
 Nudges, caps and retirements keep their existing marks.
 
-The live window starts at `startedAt` and its clock runs to half again the
-elapsed time, at least 5 minutes (30 for a factory swarm), and never past
-`startedAt + wallClockMs`.
+The live window starts at `startedAt` and its clock runs a quarter past the
+elapsed time, at least 2 minutes (half again, at least 30, for a factory
+swarm), and never past `startedAt + wallClockMs`.
 When `endedAt` is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
