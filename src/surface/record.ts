@@ -13,7 +13,7 @@ import {
   DESIGN_TOKENS,
   designTokenCssBlock,
 } from "@keelson/shared";
-import { agentCost, costText, swarmCost } from "../cost.ts";
+import { agentCost, costCents, swarmCost } from "../cost.ts";
 import { freshTokens, modelLabel, tokenCount } from "../labels.ts";
 import {
   type ActivityEntry,
@@ -180,6 +180,8 @@ svg .count { font-size: 10.5px; fill: var(--muted);
 .spend { display: grid; grid-template-columns: max-content 1fr auto; gap: 8px 14px; align-items: center; }
 .spend > .mono:last-child, .spend > span:nth-child(3n) { color: var(--muted); }
 .spend > span:first-child, .spend > .mono { white-space: nowrap; }
+.who { color: var(--fg); white-space: nowrap; }
+.who i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 7px; }
 .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--card-2); }
 .bar i { display: block; height: 100%; }
 .bar .fresh { background: var(--accent); } .bar .cached { background: var(--accent); opacity: .35; }
@@ -476,7 +478,9 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
   for (const m of model.marks) {
     const i = index.get(m.lane);
     if (i === undefined) continue;
-    marks.push(mark(xOf(f, when(m.at)), mid(i), m.glyph, m.title, m.descriptionId));
+    // A spawn mark sits just before the first turn, which usually starts at once.
+    const x = xOf(f, when(m.at)) - (m.glyph === "○" ? 8 : 0);
+    marks.push(mark(x, mid(i), m.glyph, m.title, m.descriptionId));
   }
   parts.push(`<g class="mk">${marks.join("")}</g>`);
 
@@ -653,13 +657,13 @@ function whoWokeWhom(s: SwarmSummary): string {
           ? `×${e.n}`
           : `asked ×${e.n}`;
     if (e.kind === "spawned") {
-      const sy = a.y + NODE_H;
-      const ty = b.y;
+      const sy = a.y + NODE_H + 3;
+      const ty = b.y - 4;
       parts.push(
         `<line class="edge" x1="${num(x1)}" y1="${num(sy)}" x2="${num(x2)}" y2="${num(ty)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
         ...(label
           ? [
-              `<text class="count" x="${num((x1 + x2) / 2 + 4)}" y="${num((sy + ty) / 2)}">${label}</text>`,
+              `<text class="count" x="${num((x1 + x2) / 2 + 8)}" y="${num((sy + ty) / 2 + 3.5)}">${label}</text>`,
             ]
           : []),
       );
@@ -668,15 +672,19 @@ function whoWokeWhom(s: SwarmSummary): string {
     const dx = x2 - x1;
     const dy = y2 - y1;
     const len = Math.max(1, Math.hypot(dx, dy));
-    const bend = e.from < e.to ? 18 : -18;
+    const bend = e.from < e.to ? 26 : -26;
     const cx = (x1 + x2) / 2 + (-dy / len) * bend;
     const cy = (y1 + y2) / 2 + (dx / len) * bend;
     const shrink = (x: number, y: number, towardX: number, towardY: number) => {
-      const l = Math.max(1, Math.hypot(towardX - x, towardY - y));
-      return [
-        x + ((towardX - x) / l) * (NODE_W / 2 - 4),
-        y + ((towardY - y) / l) * (NODE_H / 2 + 2),
-      ];
+      const ux = towardX - x;
+      const uy = towardY - y;
+      const l = Math.max(1, Math.hypot(ux, uy));
+      const edge = Math.min(
+        ux ? NODE_W / 2 / Math.abs(ux) : Number.POSITIVE_INFINITY,
+        uy ? NODE_H / 2 / Math.abs(uy) : Number.POSITIVE_INFINITY,
+      );
+      const t = Math.min(1, edge + 4 / l);
+      return [x + ux * t, y + uy * t];
     };
     const [sx, sy] = shrink(x1, y1, cx, cy);
     const [tx, ty] = shrink(x2, y2, cx, cy);
@@ -686,7 +694,7 @@ function whoWokeWhom(s: SwarmSummary): string {
     const my = 0.25 * (sy as number) + 0.5 * cy + 0.25 * (ty as number);
     parts.push(
       `<path class="edge${e.kind === "asked" ? " asked" : ""}" d="M${num(sx as number)} ${num(sy as number)}Q${num(cx)} ${num(cy)} ${num(tx as number)} ${num(ty as number)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
-      `<text class="count" x="${num(mx)}" y="${num(my - 3)}" text-anchor="middle">${label}</text>`,
+      `<text class="count" x="${num(mx + (-dy / len) * Math.sign(bend) * 9)}" y="${num(my + (dx / len) * Math.sign(bend) * 9 + 3.5)}" text-anchor="middle">${label}</text>`,
     );
   }
   for (const n of nodes) {
@@ -711,9 +719,9 @@ function spend(s: SwarmSummary): string {
   const items = rows.map((a) => {
     const u = a.usage as NonNullable<Agent["usage"]>;
     const fresh = freshTokens(u);
-    return `<span class="mono c-${TONE_CLASS[a.tone] ?? "neu"}">@${esc(cut(shortHandle(a.handle, s.id), 14))}</span><span class="bar"><i class="fresh" style="width:${num((100 * fresh) / most)}%"></i><i class="cached" style="width:${num((100 * u.cached) / most)}%"></i></span><span class="mono">${tokenCount(fresh)} fresh · ${tokenCount(u.cached)} cached${spendCost(agentCost(a))}</span>`;
+    return `<span class="who"><i class="c-${TONE_CLASS[a.tone] ?? "neu"}"></i>@${esc(cut(shortHandle(a.handle, s.id), 14))}</span><span class="bar"><i class="fresh" style="width:${num((100 * fresh) / most)}%"></i><i class="cached" style="width:${num((100 * u.cached) / most)}%"></i></span><span class="mono">${tokenCount(fresh)} fresh · ${tokenCount(u.cached)} cached${spendCost(agentCost(a))}</span>`;
   });
-  return `<section><h2>Spend by agent</h2><div class="spend">${items.join("")}</div><p class="note">Fresh tokens, then cached tokens after them in a lighter bar; the two are never summed.</p></section>`;
+  return `<section><h2>Tokens by agent</h2><div class="spend">${items.join("")}</div><p class="note">Bar length is fresh tokens plus cached tokens, the cached part lighter; cost is on the right.</p></section>`;
 }
 
 function runBlock(s: SwarmSummary, r: ChildRun): string {
@@ -788,12 +796,12 @@ function evidence(s: SwarmSummary): string {
 }
 
 function spendCost(cost: ReturnType<typeof agentCost>): string {
-  return cost ? ` · ${costText(cost)}` : "";
+  return cost ? ` · ${costCents(cost)}` : "";
 }
 
 function headerCost(s: SwarmSummary): string[] {
   const cost = swarmCost(s);
-  return cost ? [costText(cost)] : [];
+  return cost ? [costCents(cost)] : [];
 }
 
 function header(s: SwarmSummary): string {
@@ -808,7 +816,7 @@ function header(s: SwarmSummary): string {
     `started ${day(s.startedAt)} ${hhmm(s.startedAt)}`,
     ...(s.rerunOf ? [`reruns ${s.rerunOf}`] : []),
   ];
-  return `<header><p class="eyebrow">Swarm ${esc(s.id)} · record</p><h1>${esc(cut(firstLine(s.task, 1000), 160))}</h1><p class="meta">${esc(facts.join(" · "))}</p></header>`;
+  return `<header><p class="eyebrow">Swarm ${esc(s.id)} · record</p><h1>${esc(cut(firstLine(s.task, 1000), 400))}</h1><p class="meta">${esc(facts.join(" · "))}</p></header>`;
 }
 
 function provenance(s: SwarmSummary, composedAt: Date): string {

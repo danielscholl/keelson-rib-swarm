@@ -11,8 +11,8 @@ import type { CanvasActionItem, CanvasBoardView } from "@keelson/shared";
 import {
   byModel,
   cents,
+  costCents,
   costOf,
-  costText,
   raisedCeiling,
   spendProgress,
   spendRate,
@@ -176,7 +176,7 @@ function usageRows(s: SwarmSummary): Row[] {
       ...(m.cacheWrite !== undefined ? [`${tokenCount(write)} write`] : []),
       `${tokenCount(m.output)} out`,
       `${tokenCount(m.cached)} read`,
-      ...(cost ? [costText(cost)] : []),
+      ...(cost ? [costCents(cost)] : []),
     ].join(" · ");
   });
   const total = swarmCost(s);
@@ -188,7 +188,7 @@ function usageRows(s: SwarmSummary): Row[] {
       text: [
         `swarm · ${tokenCount(freshTokens(s.usage))} fresh${maxTokens !== undefined ? ` of ${tokenCount(maxTokens)}` : ""}`,
         ...(total
-          ? [`${costText(total)}${maxCost !== undefined ? ` of ${cents(maxCost)}` : ""}`]
+          ? [`${costCents(total)}${maxCost !== undefined ? ` of ${cents(maxCost)}` : ""}`]
           : []),
       ].join(" · "),
     },
@@ -491,7 +491,6 @@ export function requestOf(s: SwarmSummary, need: Need, server?: ServerLine): Req
         type: "select-ask",
         label: "Read question",
         tone: "brand",
-        glyph: "▤",
         payload: { id: s.id, messageId: ask.messageId },
       },
       more: [

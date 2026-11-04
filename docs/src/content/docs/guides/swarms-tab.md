@@ -22,12 +22,13 @@ oldest first. When more than 12 requests are open, it shows the oldest 12 and
 names the total in its heading. Each card leads with the request:
 
 - the title is the request itself: **Review the plan for …**, **@planner
-  asked: …**, **ClickClack stopped answering**, or **No agent has worked since
+  asks** with the question below it, **ClickClack stopped answering**, or **No agent has worked since
   21:48**
 - the first line says what happened and why it is yours, then how long it has
   waited (**opened 4 min ago**, **asked 2 min ago**), kept current by a live
   clock
-- the footnote names the task and swarm id
+- the footnote names the task and swarm id; a question's title carries the
+  swarm id instead
 - the first button is the request's verb: **Review plan**, **Read question**,
   **Open swarm**, or **Message the lead**; replies and dismissal appear when
   they apply, and **Open swarm** expands the swarm on the page
@@ -84,7 +85,9 @@ Marks show spawns (○), questions (?), operator posts and answers (▲), report
 (▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
 Nudges, caps and retirements keep their existing marks.
 
-The live window starts at `startedAt` and its clock ends at `startedAt + wallClockMs`.
+The live window starts at `startedAt` and its clock runs to half again the
+elapsed time, at least 5 minutes (30 for a factory swarm), and never past
+`startedAt + wallClockMs`.
 When `endedAt` is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
@@ -142,8 +145,8 @@ The model/provider is the one actually served. Missing evidence says
 Provenance names the parent and join time. Writers show worktree, branch,
 draft PR and observed CI, with an **Open PR** link.
 
-**Said** is this agent's recent messages only, newest first, each linked to
-its thread. **Turns** shows its newest 40 recorded spans first and names the
+**Said** is this agent's recent messages only, newest first, each opening to
+its full text. **Turns** shows its newest 40 recorded spans first and names the
 total when older turns are hidden. **Timeline** opens the record with every recorded
 turn on the timeline. The quiet
 **its messages · transcript ↗** link opens the channel, not a complete
@@ -346,17 +349,17 @@ under **Also live** and open their starting board.
 ### Ended swarms
 
 Ended swarms are rows grouped under the day they ended: **Today**,
-**Yesterday**, then the weekday and date. A row leads with the task, then
-**·** and what came of the swarm:
+**Yesterday**, then the weekday and date. A row with a report leads with the
+report's title. Any other leads with the task, then **·** and what came of the
+swarm:
 
-- the report's title, when the lead published one
-- else the conclusion's first sentence
+- the conclusion's first sentence
 - else why it ended: **Stopped by you**, **Out of turns at 40**, **Failed: …**
 
 A done row carries a check; stopped, stalled, out of budget and failed rows
 carry a chip, so the ones that did not finish stand out. ↻ marks a swarm
-started with **Retry** or **Go deeper**. The trailing names the turns, how
-long it ran, when it ended, how many of its runs verified, and
+started with **Retry** or **Go deeper**. The trailing names how
+long it ran, its cost, when it ended, how many of its runs verified, and
 **◧ report** when a report exists. The index shows the latest eight, and the
 last row opens the rest in the same day groups. The rib keeps the last 50 in
 its data directory, so they survive a restart.
@@ -465,7 +468,7 @@ the lifecycle:
   model column to the shape block), ↑ in, ↓ out, cached tokens, cache hit,
   cost and share, with a swarm row, then **Cost by kind** split into input,
   cache write, output and cache read. The record also keeps
-  Spend by agent, with fresh and cached tokens apart.
+  Tokens by agent, with fresh and cached tokens apart.
 - **Produced so far** while live, **Produced** once ended: reports,
   dispatched runs, writer draft PRs, and, once ended, kept worktrees, as
   described below
@@ -562,13 +565,13 @@ answers what happened, in what order, by whom, and at what cost:
   runs. Marks show when an agent was spawned (○), asked you something (?), when
   you posted or answered (▲), the report (▪), the conclusion (●), a run's gate
   opening and being answered (◇ ◆), and a verified run (✓); hover any bar or
-  mark for its detail. Live, a rule marks now and the right edge names when the
-  swarm's clock runs out; ended, a rule marks when it ended.
+  mark for its detail. Live, a rule marks now and the axis runs a little past it,
+  growing as the swarm runs; ended, a rule marks when it ended.
 - **Who woke whom**: the agents as nodes in their colors, you and the runs
   beside the lead, a straight arrow for each spawn and a curve for the turns
   one side started, counted
-- **Spend by agent**: fresh tokens, then cached tokens in a lighter bar after
-  them
+- **Tokens by agent**: fresh tokens, then cached tokens in a lighter bar after
+  them, with each agent's cost
 - **Runs**: each run in full, with its branch, every pull request, its CI
   verdict and detail, its steps, how long it took, each gate it paused at, who
   answered it, and why

@@ -18,6 +18,7 @@ import {
   byModel,
   cacheHit,
   cents,
+  costCents,
   costOf,
   costText,
   spendRate,
@@ -274,7 +275,7 @@ export function costTile(s: SwarmSummary, now = new Date()): Stat[] {
   return [
     {
       label: "Cost",
-      value: costText(cost),
+      value: costCents(cost),
       sub: parts.join(" · "),
       ...(rate !== undefined
         ? {
@@ -523,7 +524,7 @@ function costBar(s: SwarmSummary, now: Date): Bar[] {
       value: cost.usd,
       total: max ?? cost.usd,
       trailing: [
-        max !== undefined ? `${costText(cost)} / ${cents(max)}` : costText(cost),
+        max !== undefined ? `${costCents(cost)} / ${cents(max)}` : costCents(cost),
         ...(rate !== undefined ? [`${cents(rate)}/min`] : []),
         ...(hit !== undefined ? [`${Math.round(hit * 100)}% cache hit`] : []),
       ].join(" · "),
@@ -592,7 +593,7 @@ function agentCard(
   const pinned = a.model && a.model !== (a.lead ? s.model : (s.workerModel ?? s.model));
   const cost = agentCost(a);
   const tokens = a.usage
-    ? `${tokenCount(freshTokens(a.usage))} tokens${cost ? ` · ${costText(cost)}` : ""}`
+    ? `${tokenCount(freshTokens(a.usage))} tokens${cost ? ` · ${costCents(cost)}` : ""}`
     : undefined;
   const turns = a.lead
     ? plural(a.turns, "turn")
@@ -856,13 +857,13 @@ function costKinds(s: SwarmSummary) {
   return priced ? kinds : undefined;
 }
 
-// The Usage page's order and colors: cache read, input, cache write, output.
+// The Usage page's order (cache read, input, cache write, output) on one ramp.
 function kindSegments(kinds: NonNullable<ReturnType<typeof costKinds>>): Segment[] {
   return [
     { label: `cache read ${usd(kinds.read)}`, n: kinds.read, tone: "ramp-1" as const },
-    { label: `input ${usd(kinds.input)}`, n: kinds.input, tone: "accent" as const },
-    { label: `cache write ${usd(kinds.write)}`, n: kinds.write, tone: "caution" as const },
-    { label: `output ${usd(kinds.output)}`, n: kinds.output, tone: "ok" as const },
+    { label: `input ${usd(kinds.input)}`, n: kinds.input, tone: "ramp-2" as const },
+    { label: `cache write ${usd(kinds.write)}`, n: kinds.write, tone: "ramp-3" as const },
+    { label: `output ${usd(kinds.output)}`, n: kinds.output, tone: "ramp-4" as const },
   ].filter((k) => k.n > 0);
 }
 
@@ -1140,7 +1141,6 @@ function conversation(s: SwarmSummary): Leaf[] {
           };
         }),
         {
-          icon: "▤",
           text: `${plural(s.messageCount ?? s.recent.length, "message")} · transcript ↗`,
           ...(href ? { href } : {}),
         },
@@ -1367,18 +1367,16 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
   };
 }
 
-// A factory swarm's 12-hour backstop would squash every turn into the left edge,
-// so its axis runs a little past now and grows as the swarm does.
+// A deadline axis would squash every turn into the left edge, so the axis runs
+// a little past now and grows as the swarm does; the Time meter keeps the deadline.
 const FACTORY_AXIS_MS = 30 * 60_000;
+const LIVE_AXIS_MS = 5 * 60_000;
 function timelineUntil(s: SwarmSummary, now: Date): string {
   const start = Date.parse(s.startedAt);
   const clock = start + s.limits.wallClockMs;
-  if (!s.factory) return new Date(clock).toISOString();
+  const step = s.factory ? FACTORY_AXIS_MS : LIVE_AXIS_MS;
   const elapsed = Math.max(0, now.getTime() - start);
-  const span = Math.max(
-    FACTORY_AXIS_MS,
-    Math.ceil((elapsed * 1.5) / FACTORY_AXIS_MS) * FACTORY_AXIS_MS,
-  );
+  const span = Math.max(step, Math.ceil((elapsed * 1.5) / step) * step);
   return new Date(Math.min(clock, start + span)).toISOString();
 }
 
@@ -1503,7 +1501,7 @@ export function buildCockpit(
       {
         label: "Spend",
         ...(cost
-          ? { badge: costText(cost) }
+          ? { badge: costCents(cost) }
           : s.usage
             ? { badge: tokenCount(freshTokens(s.usage)) }
             : {}),
@@ -1545,7 +1543,7 @@ function endedSections(s: SwarmSummary, now: Date, opts: BoardOptions): Section[
       {
         label: "Spend",
         ...(cost
-          ? { badge: costText(cost) }
+          ? { badge: costCents(cost) }
           : s.usage
             ? { badge: tokenCount(freshTokens(s.usage)) }
             : {}),

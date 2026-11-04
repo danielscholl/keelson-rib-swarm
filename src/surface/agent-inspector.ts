@@ -7,7 +7,7 @@
 //     http://www.apache.org/licenses/LICENSE-2.0
 
 import type { CanvasBoardView } from "@keelson/shared";
-import { agentCost, costText } from "../cost.ts";
+import { agentCost, costCents } from "../cost.ts";
 import { freshTokens, tokenCount } from "../labels.ts";
 import { agentMessageRefusal, isLive, type SwarmSummary, type TurnSpan } from "../types.ts";
 import {
@@ -20,7 +20,6 @@ import {
   prLabel,
   shortHandle,
   span,
-  threadHref,
 } from "./format.ts";
 import { backToSwarm, LIFECYCLE, turnMeter } from "./parts.ts";
 import { AGENT_PILL, DETAIL_CHARS, openRecord } from "./swarm-board.ts";
@@ -123,8 +122,9 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
         kind: "cards",
         items: [
           {
-            title: `@${shortHandle(a.handle, s.id)}`,
+            title: a.lead ? "Lead" : "Worker",
             titleTone: a.tone,
+            prose: true,
             ...(pill ? { pill } : {}),
             bar: a.lead
               ? turnMeter(s)
@@ -160,15 +160,11 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
         kind: "rows",
         title: "Said · recent messages only",
         items: said.length
-          ? said.map((m) => {
-              const href = threadHref(s, m.threadRootId ?? m.id);
-              return {
-                text: messageLine(s.id, m.text),
-                detail: plain(m.text).slice(0, DETAIL_CHARS),
-                trailing: hhmm(m.at),
-                ...(href ? { href } : {}),
-              };
-            })
+          ? said.map((m) => ({
+              text: messageLine(s.id, m.text),
+              detail: plain(m.text).slice(0, DETAIL_CHARS),
+              trailing: hhmm(m.at),
+            }))
           : [{ text: "No messages by this agent in the recent buffer." }],
       },
       {
@@ -230,5 +226,5 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
 }
 
 function costLine(cost: ReturnType<typeof agentCost>): string {
-  return cost ? ` · ${costText(cost)}` : "";
+  return cost ? ` · ${costCents(cost)}` : "";
 }

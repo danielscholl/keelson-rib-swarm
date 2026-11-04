@@ -145,10 +145,11 @@ const FACTORY_MEANING = `Keeps the swarm running while work lands: merges, pull 
 const PAGE_CSS = `
 :root { --button-ink: var(--bg); }
 :root[data-theme="light"] { --button-ink: var(--card); }
+html, body { background: transparent; }
 body { font-size: 14px; }
 * { box-sizing: border-box; }
-main { margin: 0; background: var(--card); }
-header { display: flex; align-items: center; gap: 14px; padding: 24px; flex-wrap: wrap; }
+main { margin: 0; }
+header { display: flex; align-items: center; gap: 14px; padding: 20px 24px 16px; flex-wrap: wrap; }
 .compact { display: flex; align-items: center; gap: 12px; padding: 16px; }
 .compact input { flex: 1; min-width: 0; width: auto; }
 .compact input::placeholder { color: var(--muted); opacity: 1; }
@@ -156,16 +157,15 @@ header { display: flex; align-items: center; gap: 14px; padding: 24px; flex-wrap
 .more { padding: 6px 2px; border: 0; background: transparent; color: var(--muted); font-weight: 500; }
 .more:hover { color: var(--fg-strong); }
 .intro { flex: 1; min-width: 220px; }
-h1 { font-size: 22px; line-height: 1.3; margin: 0 0 5px; color: var(--fg-strong); }
 p { margin: 0; }
 .hint { color: var(--muted); font-size: 13px; }
 button, textarea, select, input { font: inherit; }
-button { cursor: pointer; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: var(--card); color: var(--fg); }
+button { cursor: pointer; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: transparent; color: var(--fg); }
 button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
 .fields { padding: 0 24px 24px; }
 label { display: block; font-size: 13px; font-weight: 600; color: var(--fg-strong); margin-bottom: 8px; }
 textarea, select, input { display: block; width: 100%; border: 1px solid var(--border);
-  border-radius: 10px; padding: 11px 12px; color: var(--fg); background: var(--card);
+  border-radius: 10px; padding: 11px 12px; color: var(--fg); background: transparent;
   transition: border-color .12s ease, box-shadow .12s ease; }
 textarea:hover, select:hover, input:hover { border-color: color-mix(in srgb, var(--fg) 22%, var(--border)); }
 textarea:focus, select:focus, input:focus { outline: none; border-color: var(--accent);
@@ -182,9 +182,9 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .chevron { display: inline-block; margin-left: 6px; }
 .plan-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .plan { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 18px;
-  border-radius: 12px; background: var(--card); color: var(--fg); transition: border-color .12s ease, background .12s ease; }
+  border-radius: 12px; background: transparent; color: var(--fg); transition: border-color .12s ease, background .12s ease; }
 .plan[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent);
-  background: color-mix(in srgb, var(--accent) 5%, var(--card)); }
+  background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .plan-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--fg-strong); }
 .plan-blurb { display: block; margin-top: 6px; color: var(--muted); line-height: 1.5; min-height: 3em; }
 .plan-body { display: flex; flex-direction: column; align-items: stretch; gap: 14px; margin-top: auto; padding-top: 16px; }
@@ -231,7 +231,7 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .chip.is-muted { color: var(--muted); border-style: dashed; background: transparent; }
 .chip button { padding: 0 4px; border: 0; background: transparent; color: var(--fg); }
 .workflow-input { width: 100%; min-width: 0; margin-top: 10px; padding: 8px 10px;
-  border: 1px dashed var(--border); border-radius: 10px; color: var(--fg); background: var(--card); }
+  border: 1px dashed var(--border); border-radius: 10px; color: var(--fg); background: transparent; }
 .workflow-input::placeholder { color: var(--muted); opacity: 1; }
 .workflow-error { color: var(--fg); margin-top: 8px; }
 .workflow-count { margin-top: 8px; }
@@ -942,7 +942,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
     .join("");
   const expanded = `
   <header>
-    <div class="intro"><h1>New swarm</h1><p class="hint">Agents investigate, debate, and bring back a conclusion.</p></div>
+    <div class="intro"><p class="hint">Agents investigate, debate, and bring back a conclusion.</p></div>
     ${state.hasSwarms ? '<button class="more" id="launch-fewer" type="button" aria-controls="launch-root">Fewer options<span class="chevron" aria-hidden="true">⌃</span></button>' : ""}
   </header>
   <form id="launch-form" data-nonce="${esc(nonce)}" data-can-create-project="${Boolean(state.canCreateProject)}" data-can-init-tracker="${Boolean(state.canInitTracker)}" data-provider="${esc(state.provider ?? "")}" data-providers="${esc(JSON.stringify(catalog.map((c) => c.provider)))}" data-budgets="${esc(JSON.stringify(budgets))}" data-factory-budgets="${esc(JSON.stringify(factoryBudgets))}">

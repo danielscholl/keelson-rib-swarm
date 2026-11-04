@@ -572,11 +572,11 @@ status and reason, and the summary is the run's last progress frame.
 
 The rib publishes a Swarms tab. Needs you is one list across every live swarm:
 one card per request, oldest first, with the oldest 12 shown when there are
-more. Each card leads with the request (Review the plan for …, @planner asked:
-…, Crew is at $32.00 of its $40.00 cost ceiling, ClickClack stopped answering,
+more. Each card leads with the request (Review the plan for …, @planner asks,
+with the question below it, Crew is at $32.00 of its $40.00 cost ceiling, ClickClack stopped answering,
 No agent has worked since …) and its verb (Review plan, Read question, Raise to
 $60.00, Open swarm, Message the lead). The task and swarm
-id sit in the footnote. Open swarm expands that live swarm on the page.
+id sit in the footnote; a question's title carries the swarm id instead. Open swarm expands that live swarm on the page.
 
 The expanded live swarm is a cockpit on the page, not in the drawer. It runs:
 the task and id with a lifecycle or needs-you pill and the crew as faces; a
@@ -615,7 +615,8 @@ Marks show spawns (○), questions (?), operator posts and answers (▲), report
 (▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
 Nudges, caps and retirements keep their existing marks.
 
-The live window starts at startedAt and its clock ends at startedAt + wallClockMs.
+The live window starts at startedAt and its clock runs to half again the elapsed
+time, at least 5 minutes (30 for a factory swarm), and never past startedAt + wallClockMs.
 When endedAt is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
@@ -662,8 +663,8 @@ actually served model/provider. Missing evidence says not reported or not record
 never the requested model as served. Provenance names the parent and join time.
 Writers show worktree, branch, draft PR and observed CI, with an Open PR link.
 
-Said is this agent's recent messages only, newest first, each linked to its
-thread. Turns keeps its recorded spans newest first. The quiet Its messages ·
+Said is this agent's recent messages only, newest first, each opening to its
+full text. Turns keeps its recorded spans newest first. The quiet Its messages ·
 transcript ↗ link opens the channel, not a complete agent-only message history.
 Message @agent posts as you with the roster's full handle mentioned, through
 the unchanged router. It wakes the selected agent and spends a turn; additional
@@ -802,10 +803,10 @@ turn-budget meter; starting swarms stay cards there.
 
 Ended swarms are rows grouped under the day they ended (Today, Yesterday, then
 the weekday and date), the newest eight on the tab and every one in the history
-drawer. A row leads with the task, then · and what came of the swarm: the
-report's title, the conclusion's first sentence, or why it ended (Stopped by
+drawer. A row with a report leads with the report's title; any other leads with
+the task, then · and what came of the swarm: the conclusion's first sentence, or why it ended (Stopped by
 you, Out of turns at 40). A done row carries a check and the rest a lifecycle
-chip; ↻ marks a rerun. The trailing names turns, time, the clock when it ended,
+chip; ↻ marks a rerun. The trailing names how long it ran, cost, the clock when it ended,
 how many runs verified, and ◧ report.
 
 Requests come in a ladder: decide (a run waits at an approval only the operator
@@ -863,7 +864,7 @@ monospace/stacked cards or ghost seats. Spend shows on live boards, cockpits and
 once an agent has spent: a table of each agent's model and provider, ↑ in, ↓ out,
 cached tokens, cache hit, cost and share, a swarm row, then Cost by kind.
 The cockpit and ended board leave out the model column, which the shape block
-names. The record keeps Spend by agent, with fresh and cached tokens apart. Both lifecycles retain the produced inventory when applicable:
+names. The record keeps Tokens by agent, with fresh and cached tokens apart. Both lifecycles retain the produced inventory when applicable:
 Produced so far while live, Produced once ended.
 Ended Activity shows at most the newest 12 events, with actor, time and repeats,
 and no Read the full log row. Only live Activity adds Read the full log when
@@ -909,7 +910,7 @@ a lane per agent (turns as bars in the agent's color, hatched when a turn timed
 out or failed), the operator's lane above and a lane per run below, with marks
 for spawns, questions to the operator, operator posts, the report, the
 conclusion, gates opened and answered, and verification; a graph of who woke
-whom; spend by agent with fresh and cached tokens apart; each run in full;
+whom; tokens by agent with fresh and cached tokens apart; each run in full;
 Activity; and the evidence the agents were given. Activity shows the latest
 200 retained entries, newest first, with actor, date/time, event and repeat
 count. The operator reads as you, absent actors as rib, and unknown actors stay

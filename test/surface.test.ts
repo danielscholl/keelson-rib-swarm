@@ -1696,8 +1696,9 @@ describe("the agent inspector", () => {
       kind: "cards",
       items: [
         {
-          title: "@w1",
+          title: "Worker",
           titleTone: "id-blue",
+          prose: true,
           pill: { label: "busy" },
           bar: { value: 3, total: 12 },
         },
@@ -1721,7 +1722,7 @@ describe("the agent inspector", () => {
       "Latest @lead",
       "First",
     ]);
-    expect(said?.kind === "rows" ? said.items[1]?.href : "").toBe(threadHref(s, "root"));
+    expect(said?.kind === "rows" ? said.items.some((r) => r.href) : true).toBe(false);
     const turns = leaves(view.sections).find((x) => x.title === "Turns");
     expect(turns?.kind === "rows" ? turns.items.length : 0).toBe(2);
     expect(text).toContain("took 30 s");
@@ -1859,7 +1860,7 @@ describe("the agent inspector", () => {
           for (const index of [0, 1]) {
             const view = inspect(snapshot, index);
             expect(view.sections[0]).toMatchObject({
-              items: [{ title: index === 0 ? "@lead" : "@w1", pill }],
+              items: [{ title: index === 0 ? "Lead" : "Worker", pill }],
             });
             expect(JSON.stringify(view)).not.toContain('"clock"');
             expect(JSON.stringify(view)).not.toContain('"type":"message-agent"');
@@ -2132,7 +2133,7 @@ describe("the live cockpit", () => {
       expect(meters.items.map((b) => b.label)).toEqual(["Turns", "Time", "Fresh tokens", "Cost"]);
       const cost = meters.items[3];
       expect(cost?.total).toBe(60);
-      expect(cost?.segments?.map((x) => x.tone)).toEqual(["ramp-1", "accent", "ok"]);
+      expect(cost?.segments?.map((x) => x.tone)).toEqual(["ramp-1", "ramp-2", "ramp-4"]);
       expect(cost?.segments?.map((x) => x.label.split(" $")[0])).toEqual([
         "cache read",
         "input",
@@ -2371,7 +2372,6 @@ describe("the live cockpit", () => {
       });
     }
     expect(conversation.items.at(-1)).toEqual({
-      icon: "▤",
       text: "23 messages · transcript ↗",
       href: channelHref(s),
     });
@@ -2427,7 +2427,7 @@ describe("the live cockpit", () => {
     if (conversation?.kind !== "rows") throw new Error("expected Conversation rows");
     expect(conversation.items).toEqual([
       { text: "[link](https://other)", trailing: hhmm(T0) },
-      { icon: "▤", text: "1 message · transcript ↗" },
+      { text: "1 message · transcript ↗" },
     ]);
   });
 
@@ -2791,7 +2791,7 @@ describe("Swarms boards", () => {
     const inspector = buildAgentInspector(ended, ended.agents[1]!);
     board(agentKey(s.id), inspector);
     expect(inspector.sections[0]).toMatchObject({
-      items: [{ title: "@w1", pill: { label: "done", tone: "ok" } }],
+      items: [{ title: "Worker", pill: { label: "done", tone: "ok" } }],
     });
     expect(JSON.stringify(inspector)).not.toContain('"clock"');
     expect(JSON.stringify(inspector)).not.toContain('"type":"message-agent"');
@@ -3056,7 +3056,7 @@ describe("Swarms boards", () => {
     const last = cardsOf(buildIndex(state({ live: [fixtures.onlyYou!, undated] })));
     expect(last.map((c) => c.pill?.label)).toEqual(["decide", "connection"]);
     for (const [i, card] of cards.entries()) {
-      expect(card.footnote).toEndWith(` · ${ordered[i]!.id}`);
+      expect(card.footnote ?? card.title).toEndWith(` · ${ordered[i]!.id}`);
       expect(card.reason).toBeUndefined();
       expect(JSON.stringify(card)).not.toContain("more request");
       expect(card.bar).toBeUndefined();
@@ -3179,7 +3179,8 @@ describe("Swarms boards", () => {
     const cards = cardsOf(buildIndex(state({ live: [fixtures.asked!] })));
     expect(cards).toHaveLength(2);
     const question = cards[0];
-    expect(question?.title).toBe("@w1 asked: which retry cap, 30 s or 60 s?");
+    expect(question?.title).toBe(`@w1 asks · ${fixtures.asked!.id}`);
+    expect(question?.fields?.[0]?.value).toBe("which retry cap, 30 s or 60 s?");
     expect(question?.pill).toEqual({ label: "question", tone: "caution" });
     expect(question?.fields?.some((field) => field.href)).toBe(false);
     expect(JSON.stringify(question)).not.toContain("in ClickClack");
@@ -3279,7 +3280,7 @@ describe("Swarms boards", () => {
     expect(today[0]).toEqual({
       icon: "✓",
       text: "Fix issue #27: README undercounts frontend-mix nodes · The count is twelve.",
-      trailing: `11 turns · 0 s · ${hhmm(T0)}`,
+      trailing: `0 s · ${hhmm(T0)}`,
       action: { type: "swarm-open", payload: { id: "s0010" } },
     });
     const last = days[2]?.kind === "rows" ? days[2].items : [];
@@ -3289,9 +3290,7 @@ describe("Swarms boards", () => {
     expect(history.map((x) => (x.kind === "rows" ? x.items.length : 0))).toEqual([3, 3, 5]);
 
     const done = fixtures.done!;
-    expect(endedRow(done).trailing).toBe(
-      `11 turns · 29 min · ${hhmm(done.endedAt)} · 1 of 1 run verified`,
-    );
+    expect(endedRow(done).trailing).toBe(`29 min · ${hhmm(done.endedAt)} · 1 of 1 run verified`);
   });
 
   test("an ended row names the report, a rerun, or why it stopped, and stays short", () => {
@@ -3304,9 +3303,7 @@ describe("Swarms boards", () => {
         report: { title: "Cold start timeout fix", at: T0, bytes: 3000 },
       }),
     );
-    expect(again.text).toBe(
-      "↻ Fix issue #27: README undercounts frontend-mix nodes · Cold start timeout fix",
-    );
+    expect(again.text).toBe("↻ Cold start timeout fix");
     expect(again.trailing?.endsWith("· ◧ report")).toBe(true);
     const said = endedRow(
       swarm("s2say", {
@@ -3657,7 +3654,7 @@ describe("Swarms boards", () => {
     ]);
     const row = JSON.stringify(buildIndex({ live: [], starting: [], ended: [stopped] }));
     expect(row).toContain('"chip":{"label":"stopped","tone":"neutral"}');
-    expect(row).toContain('"trailing":"11 turns · 23 s · ');
+    expect(row).toContain('"trailing":"23 s · ');
     const out = buildSwarmBoard(
       swarm("s4out", { status: "exhausted", endedAt: T0, error: "turn budget of 40 spent" }),
     );
@@ -4573,7 +4570,7 @@ describe("the details", () => {
             { agent: "swarm", in: "↑ 4k", out: "↓ 1k", cached: "9k" },
           ],
         });
-        expect(buildRecord(s, new Date(T0))).toContain("Spend by agent");
+        expect(buildRecord(s, new Date(T0))).toContain("Tokens by agent");
         expect(buildRecord(s, new Date(T0))).toContain("4k fresh · 9k cached");
         expect(buildRecord(s, new Date(T0))).toContain("1k fresh · 0 cached");
       }
@@ -5762,7 +5759,7 @@ describe("the record page", () => {
     },
   );
 
-  test("ended Spend by agent retains fresh and cached usage without inventing missing usage", () => {
+  test("ended Tokens by agent retains fresh and cached usage without inventing missing usage", () => {
     const s = swarm("sspend", {
       status: "done",
       endedAt: T0,
@@ -5774,7 +5771,7 @@ describe("the record page", () => {
       ],
     });
     const section = buildRecord(s, new Date(T0)).match(
-      /<section><h2>Spend by agent<\/h2>.*?<\/section>/,
+      /<section><h2>Tokens by agent<\/h2>.*?<\/section>/,
     )?.[0];
     expect(section).toBeDefined();
     expect(section).toContain("@lead</span>");
@@ -5785,7 +5782,7 @@ describe("the record page", () => {
     expect(section).toContain("0 fresh · 60 cached");
     expect(section).not.toContain("@w3");
     expect(buildRecord({ ...s, agents: [agent(s.id, 0)] }, new Date(T0))).not.toContain(
-      "Spend by agent",
+      "Tokens by agent",
     );
   });
 
@@ -12000,8 +11997,8 @@ describe("launching from the tab", () => {
   test("the themed launcher offers plans, always visible Lead and Workers models, and access only in a project template", () => {
     for (const st of [{ projects }, { projects: [] }]) {
       const page = buildLaunch(st, "nonce");
+      expect(page).not.toContain("<h1>");
       for (const copy of [
-        "New swarm",
         "Agents investigate, debate, and bring back a conclusion.",
         ">Task<",
         ">Size<",

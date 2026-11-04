@@ -13,6 +13,7 @@ import { NEED_ORDER, type Need, needsYou, oldestNeed, UNDATED } from "../needs.t
 import { type StartingSwarm, type SwarmSummary, sizeOf } from "../types.ts";
 import { dayHeading, firstLine, gist, hhmm, plural, shortHandle, span } from "./format.ts";
 import {
+  askGist,
   causeTitle,
   LIFECYCLE,
   livePill,
@@ -92,6 +93,16 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
     action.type === "swarm-open" ? { ...action, type: "select-swarm", glyph: "↓" } : action;
   const actions = [request.primary, ...request.more].map(local);
   if (!actions.some((a) => a.type === "select-swarm")) actions.push(selectSwarm(s));
+  if (need.kind === "question" && need.ask) {
+    return {
+      title: `@${shortHandle(need.ask.handle, s.id)} asks · ${s.id}`,
+      pill: request.pill,
+      edge: request.pill.tone,
+      prose: true,
+      fields: [{ value: askGist(need.ask.text, 320) }, ...sinceClock(need)],
+      actions,
+    };
+  }
   return {
     title: request.title,
     pill: request.pill,
@@ -147,21 +158,22 @@ function outcomeOf(s: SwarmSummary): string {
   return said || firstLine(causeTitle(s, false).split(". ")[0]!, OUTCOME_CHARS);
 }
 
-// An ended swarm leads with the task it was for, then its outcome. A done row
-// carries a quiet check, so a chip marks only the swarms that did not finish.
+// A swarm with a report leads with the report's title; any other leads with
+// its task, then its outcome. A done row carries a quiet check, so a
+// chip marks only the swarms that did not finish.
 // The trailing text never shrinks on the host, so it carries only the short facts.
 export function endedRow(s: SwarmSummary): Row {
   const took = span(s.startedAt, s.endedAt);
   const verified = verifiedText(s);
+  const concluded = s.status === "done" && s.report;
   const tail = ` · ${outcomeOf(s)}`;
   const cost = swarmCost(s);
   return {
     ...(s.status === "done"
       ? { icon: "✓" }
       : { chip: { label: LIFECYCLE[s.status].label, tone: LIFECYCLE[s.status].tone } }),
-    text: `${s.rerunOf ? "↻ " : ""}${firstLine(s.task, Math.max(24, ENDED_TEXT - tail.length))}${tail}`,
+    text: `${s.rerunOf ? "↻ " : ""}${concluded ? outcomeOf(s) : `${firstLine(s.task, Math.max(24, ENDED_TEXT - tail.length))}${tail}`}`,
     trailing: [
-      plural(s.turnsUsed, "turn"),
       ...(took ? [took] : []),
       ...(cost ? [rowCost(cost, estimated(s))] : []),
       hhmm(s.endedAt ?? s.startedAt),
@@ -256,7 +268,7 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
   const status =
     needing.length > 0
       ? {
-          label: `${needing.length} need${needing.length === 1 ? "s" : ""} you`,
+          label: `${needs.length} need${needs.length === 1 ? "s" : ""} you`,
           tone: "caution" as const,
         }
       : liveCount > 0

@@ -106,6 +106,10 @@ export function cents(n: number): string {
   return n > 0 && n < 0.01 ? "<$0.01" : `$${n.toFixed(2)}`;
 }
 
+export function costCents(c: Cost): string {
+  return c.unpricedTurns > 0 ? `≥ ${cents(c.usd)}` : cents(c.usd);
+}
+
 // List dollars per minute since the swarm started, once a minute has passed.
 export function spendRate(
   s: Pick<SwarmSummary, "agents" | "startedAt" | "endedAt">,
