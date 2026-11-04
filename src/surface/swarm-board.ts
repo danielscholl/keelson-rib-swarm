@@ -1333,13 +1333,13 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     .filter((item) => ids.has(item.lane))
     .sort((a, b) => Date.parse(a.from) - Date.parse(b.from))
     .slice(-400)
-    .map(({ lane, from, to, tone, hatched, title }) => ({
+    .map(({ lane, from, to, tone, hatched, title, short }) => ({
       lane,
       from,
       ...(to ? { to } : {}),
       ...(tone ? { tone } : {}),
       ...(hatched ? { hatched } : {}),
-      title,
+      title: short ?? title,
     }));
   const marks = model.marks
     .filter((item) => ids.has(item.lane))

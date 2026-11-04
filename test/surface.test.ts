@@ -2191,7 +2191,7 @@ describe("the live cockpit", () => {
         { id: s.runs![0]!.runId, label: "fix-issue rtimelin", tone: "info", group: "Runs" },
       ],
       spans: [
-        { lane: "stimeline-lead", from: T0, title: "turn 1 · running · woken by the task" },
+        { lane: "stimeline-lead", from: T0, title: "turn 1" },
         {
           lane: s.runs![0]!.runId,
           from: T0,
@@ -5869,9 +5869,9 @@ describe("the record page", () => {
       })),
     });
     expect(buildAgentEdges(s)).toHaveLength(132);
-    expect((buildRecord(s, new Date(T0)).match(/marker-end="url\(#arrow\)"/g) ?? []).length).toBe(
-      40,
-    );
+    expect(
+      (buildRecord(s, new Date(T0)).match(/marker-(?:end|start)="url\(#arrow\)"/g) ?? []).length,
+    ).toBe(40);
   });
 
   const at = (m: number) => new Date(Date.parse(T0) + m * 60_000).toISOString();
@@ -6022,13 +6022,13 @@ describe("the record page", () => {
       model.spans
         .slice()
         .sort((a, b) => Date.parse(a.from) - Date.parse(b.from))
-        .map(({ lane, from, to, tone, hatched, title }) => ({
+        .map(({ lane, from, to, tone, hatched, title, short }) => ({
           lane,
           from,
           ...(to ? { to } : {}),
           ...(tone ? { tone } : {}),
           ...(hatched ? { hatched } : {}),
-          title,
+          title: short ?? title,
         })),
     );
     expect(native.marks).toEqual(
@@ -6229,7 +6229,7 @@ describe("the record page", () => {
     const ids = new Set(native.lanes.map((lane) => lane.id));
     for (const item of [...native.spans, ...native.marks]) {
       expect(ids.has(item.lane)).toBe(true);
-      expect(record).toContain(`<title>${esc(item.title)}</title>`);
+      expect(record).toContain(`<title>${esc(item.title)}`);
     }
     expect(record.length).toBeLessThan(128_000);
     expect(activitySection(record).match(/<tr id=e\d+>/g)).toHaveLength(200);

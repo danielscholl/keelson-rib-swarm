@@ -919,7 +919,9 @@ identified. Retained events are not a complete transcript. It has no buttons; th
 verb. A live record redraws when the swarm's course changes, at most every five
 seconds.
 The record shares timeline lanes, spans, marks and their titles with the cockpit,
-not its deadline window or native rendering. Older swarms without recorded turns
+not its deadline window or native rendering. The cockpit titles a turn bar only
+turn N (and timeout or error), since the host prints a span's title inside it;
+the record keeps the full title on hover. Older swarms without recorded turns
 show their events and runs without turn bars.
 
 Read the draft opens the reading pane with the lead's refused draft and the full

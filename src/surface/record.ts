@@ -261,6 +261,8 @@ interface Lane extends CanvasTimelineLane {
 interface TimelineSpan extends CanvasTimelineSpan {
   kind: "turn" | "run";
   cls: string;
+  // The host prints a span's title inside its bar, so the cockpit sends this instead.
+  short?: string;
 }
 
 interface TimelineMark extends CanvasTimelineMark {
@@ -359,6 +361,7 @@ export function buildTimelineModel(s: SwarmSummary): {
       ...(t.endedAt ? { to: t.endedAt } : {}),
       ...(t.outcome === "timeout" || t.outcome === "error" ? { hatched: true } : {}),
       title: spanTitle(s, t),
+      short: `turn ${t.n}${t.outcome === "timeout" || t.outcome === "error" ? ` · ${t.outcome}` : ""}`,
     });
   }
   for (const r of s.runs ?? []) {
@@ -640,11 +643,13 @@ function whoWokeWhom(s: SwarmSummary): string {
   const sameRow = graphEdges.some(
     (e) => e.kind !== "spawned" && at.get(e.from)?.y === at.get(e.to)?.y,
   );
-  const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + (sameRow ? 84 : 34);
+  const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + (sameRow ? 96 : 34);
   const parts: string[] = [
-    `<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0L8 4L0 8z"/></marker></defs>`,
+    `<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path class="arrow" d="M0 0L8 4L0 8z"/></marker></defs>`,
   ];
+  const paired = new Set<AgentEdge>();
   for (const e of graphEdges) {
+    if (paired.has(e)) continue;
     const a = at.get(e.from);
     const b = at.get(e.to);
     if (!a || !b) continue;
@@ -653,6 +658,32 @@ function whoWokeWhom(s: SwarmSummary): string {
     const x2 = b.x;
     const y2 = b.y + NODE_H / 2;
     if (!ok(x1, y1, x2, y2)) continue;
+    if (e.kind === "woke" && a.y === b.y) {
+      // Peers on one row share one curve below it, an arrowhead for each way that woke.
+      const back = graphEdges.find((r) => r.kind === "woke" && r.from === e.to && r.to === e.from);
+      if (back) paired.add(back);
+      const [left, right] = x1 < x2 ? [a, b] : [b, a];
+      const rightward = x1 < x2 ? e : back;
+      const leftward = x1 < x2 ? back : e;
+      const near = right.x - left.x <= W / 4 + 1;
+      const sx = left.x + NODE_W * (near ? 0.3 : 0.06);
+      const tx = right.x - NODE_W * (near ? 0.3 : 0.06);
+      const sy = y1 + NODE_H / 2 + 4;
+      const cy = sy + 12 + ((right.x - left.x) / (W / 4)) * 28;
+      const apex = (sy + cy) / 2;
+      const n = (rightward?.n ?? 0) + (leftward?.n ?? 0);
+      const text =
+        rightward && leftward
+          ? rightward.n === leftward.n
+            ? `×${rightward.n} ⇄`
+            : `×${rightward.n} → ← ×${leftward.n}`
+          : `×${n}`;
+      parts.push(
+        `<path class="edge" d="M${num(sx)} ${num(sy)}Q${num((sx + tx) / 2)} ${num(cy)} ${num(tx)} ${num(sy)}" stroke-width="${num(1 + Math.min(3, Math.log2(n)))}"${rightward ? ' marker-end="url(#arrow)"' : ""}${leftward ? ' marker-start="url(#arrow)"' : ""}/>`,
+        `<text class="count" x="${num((sx + tx) / 2)}" y="${num(near ? apex - 5 : apex + 14)}" text-anchor="middle">${text}</text>`,
+      );
+      continue;
+    }
     const width = e.kind === "spawned" ? 1.2 : 1 + Math.min(3, Math.log2(e.n));
     const label =
       e.kind === "spawned"
@@ -682,7 +713,9 @@ function whoWokeWhom(s: SwarmSummary): string {
     const flat = Math.abs(dy) < 1;
     const bend = flat ? 0 : e.from < e.to ? 40 : -40;
     const cx = (x1 + x2) / 2 + (-dy / len) * bend;
-    const cy = flat ? y1 + (e.from < e.to ? 44 : 76) : (y1 + y2) / 2 + (dx / len) * bend;
+    const forward = e.from < e.to;
+    const depth = NODE_H / 2 + 16 + (Math.abs(dx) / (W / 4)) * 24 + (forward ? 0 : 18);
+    const cy = flat ? y1 + depth : (y1 + y2) / 2 + (dx / len) * bend;
     const shrink = (x: number, y: number, towardX: number, towardY: number) => {
       const ux = towardX - x;
       const uy = towardY - y;
@@ -703,7 +736,7 @@ function whoWokeWhom(s: SwarmSummary): string {
     parts.push(
       `<path class="edge${e.kind === "asked" ? " asked" : ""}" d="M${num(sx as number)} ${num(sy as number)}Q${num(cx)} ${num(cy)} ${num(tx as number)} ${num(ty as number)}" stroke-width="${num(width)}" marker-end="url(#arrow)"/>`,
       flat
-        ? `<text class="count" x="${num(mx)}" y="${num(my + 14)}" text-anchor="middle">${label}</text>`
+        ? `<text class="count" x="${num(mx)}" y="${num(forward ? my - 4 : my + 13)}" text-anchor="middle">${label}</text>`
         : `<text class="count" x="${num(mx + (-dy / len) * Math.sign(bend) * 9)}" y="${num(my + (dx / len) * Math.sign(bend) * 9 + 3.5)}" text-anchor="middle">${label}</text>`,
     );
   }
@@ -714,7 +747,7 @@ function whoWokeWhom(s: SwarmSummary): string {
     );
   }
   const svg = `<svg viewBox="0 0 ${W} ${num(height)}" role="img" aria-label="Who woke whom">${parts.join("")}</svg>`;
-  return `<section><h2>Who woke whom</h2><div class="scroll">${svg}</div><p class="note">A straight arrow is a spawn; a curve counts the turns one side's messages or run updates started (×n); a dashed curve is a question to you. The task's kickoff and idle nudges are left out.</p></section>`;
+  return `<section><h2>Who woke whom</h2><div class="scroll">${svg}</div><p class="note">A straight arrow is a spawn; a curve counts the turns one side's messages or run updates started (×n, ⇄ when both ways match); a dashed curve is a question to you. The task's kickoff and idle nudges are left out.</p></section>`;
 }
 
 // ---- Spend, runs, and the evidence the agents were given. ----

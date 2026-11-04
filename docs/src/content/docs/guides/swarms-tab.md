@@ -571,7 +571,8 @@ answers what happened, in what order, by whom, and at what cost:
   growing as the swarm runs; ended, a rule marks when it ended.
 - **Who woke whom**: the agents as nodes in their colors, you and the runs
   beside the lead, a straight arrow for each spawn and a curve for the turns
-  one side started, counted
+  one side started, counted; two workers on one row share one curve below it,
+  with an arrowhead for each way that woke
 - **Tokens by agent**: fresh tokens, then cached tokens in a lighter bar after
   them, with each agent's cost
 - **Runs**: each run in full, with its branch, every pull request, its CI
@@ -589,7 +590,9 @@ when the swarm's course changes, at most every five seconds. Swarms that ended
 before this page existed show their events and runs but no turn bars, since
 their turns were not kept.
 The record shares timeline lanes, spans, marks and their titles with the cockpit,
-not its deadline window or native rendering.
+not its deadline window or native rendering. The cockpit titles a turn bar only
+turn N (and timeout or error), since the host prints a span's title inside it;
+the record keeps the full title on hover.
 
 ## Starting a swarm
 
