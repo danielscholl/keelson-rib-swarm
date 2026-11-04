@@ -36,7 +36,7 @@ provider's models, and, once that plan has run here, its median and highest cost
 
 | Plan | For | Agents | Turns | Minutes |
 | --- | --- | --- | --- | --- |
-| Scout | A narrow question, or a first pass before a bigger run. | 3 | 20 | 15 |
+| Scout | A narrow question, or a first pass. | 3 | 20 | 15 |
 | Crew | Most tasks: investigate, debate, and decide. | 5 | 40 | 30 |
 | Fleet | Wide or hard problems that are worth the spend. | 8 | 80 | 60 |
 
@@ -118,7 +118,7 @@ The switch and initialization create no grants. The rib never runs `bd init`
 itself; the host-owned beads tool initializes and refreshes the tracker.
 Existing-project starts, Retry and Go deeper do not initialize a tracker.
 
-With no project selected, the **ALSO ALLOW** group is absent. Selecting an
+With no project selected, the **Also allow** group is absent. Selecting an
 existing project reveals **Write**, **Run workflows** and **Use the tracker**,
 all off.
 

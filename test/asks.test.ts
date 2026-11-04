@@ -269,7 +269,8 @@ describe("an agent asking the operator", () => {
     const s = swarm.summary();
     const index = JSON.stringify(buildIndex({ live: [s], starting: [], ended: [] }));
     expect(index).toContain('{"label":"asked","clock":{"at":"');
-    expect(index).toContain("@lead asked: Which do you prefer, 8 of 12 or all 12?");
+    expect(index).toContain('"title":"@lead asks · s1"');
+    expect(index).toContain('"value":"Which do you prefer, 8 of 12 or all 12?"');
     const drawer = JSON.stringify(buildSwarmBoard(s));
     expect(drawer).toContain('"title":"@lead asked: Which do you prefer, 8 of 12 or all 12?"');
     expect(drawer).toContain("Read question");
@@ -455,7 +456,7 @@ describe("an agent asking the operator", () => {
     const index = buildIndex({ live: [s], starting: [], ended: [] });
     expect(() => expectView(INDEX_KEY, "board")(index)).not.toThrow();
     expect(JSON.stringify(index)).toContain(
-      "@lead asked: is the 30 s backoff cap a product decision or a guess?",
+      "is the 30 s backoff cap a product decision or a guess?",
     );
     const drawer = buildSwarmBoard(s);
     expect(() => expectView(swarmKey("s1"), "board")(drawer)).not.toThrow();

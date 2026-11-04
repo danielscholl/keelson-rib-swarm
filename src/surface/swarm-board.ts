@@ -18,6 +18,7 @@ import {
   byModel,
   cacheHit,
   cents,
+  costCents,
   costOf,
   costText,
   spendRate,
@@ -48,6 +49,7 @@ import {
   day,
   firstLine,
   hhmm,
+  hhmmss,
   messageLine,
   minutes,
   plain,
@@ -57,6 +59,7 @@ import {
   shortHandle,
   shortRun,
   span,
+  taskHead,
   threadHref,
 } from "./format.ts";
 import { runAgainItem } from "./launch-board.ts";
@@ -78,7 +81,7 @@ import {
   stateLine,
   stopAction,
 } from "./parts.ts";
-import { buildAgentEdges, buildTimelineModel } from "./record.ts";
+import { buildAgentEdges, buildTimelineModel, legendKeys } from "./record.ts";
 
 type Section = CanvasBoardView["sections"][number];
 type Leaf = Exclude<Section, { kind: "columns" | "tabs" }>;
@@ -274,7 +277,7 @@ export function costTile(s: SwarmSummary, now = new Date()): Stat[] {
   return [
     {
       label: "Cost",
-      value: costText(cost),
+      value: costCents(cost),
       sub: parts.join(" · "),
       ...(rate !== undefined
         ? {
@@ -425,20 +428,22 @@ function modelLines(s: SwarmSummary): { label: string; value: string }[] {
   }
   return [
     { label: "lead", value: leadModel },
-    ...[...counts].map(([model, n]) => ({ label: "workers", value: `${model} · ${n}` })),
+    ...[...counts].map(([model, n]) => ({ label: "workers", value: `${model} × ${n}` })),
   ];
 }
 
-// An ended board has no head card, so its crew rides in the shape card.
-function shapeCard(s: SwarmSummary, crew: boolean): Card {
-  const seats = live(s)
-    ? `${s.agents.length} of ${s.limits.maxAgents} agents`
-    : plural(s.agents.length, "agent");
-  const people = crew ? crewPeople(s) : [];
+function shapeCard(s: SwarmSummary): Card {
+  const seats = live(s) ? `${s.agents.length} of ${s.limits.maxAgents}` : String(s.agents.length);
   return {
     title: sizeWord(s),
-    stacked: true,
-    fields: [...(people.length > 0 ? [{ people }] : []), { value: seats }, ...modelLines(s)],
+    prose: true,
+    fields: [
+      { label: "Agents", value: seats },
+      ...modelLines(s).map(({ label, value }) => ({
+        label: label === "lead" ? "Lead" : "Workers",
+        value,
+      })),
+    ],
   };
 }
 
@@ -511,19 +516,16 @@ function costBar(s: SwarmSummary, now: Date): Bar[] {
   const max = s.spend?.maxCostUsd;
   const rate = live(s) ? spendRate(s, now) : undefined;
   const hit = cacheHit(s.usage);
-  const kinds = costKinds(s);
-  const segments = kinds ? kindSegments(kinds) : [];
   return [
     {
       label: "Cost",
       value: cost.usd,
       total: max ?? cost.usd,
       trailing: [
-        max !== undefined ? `${costText(cost)} / ${cents(max)}` : costText(cost),
+        max !== undefined ? `${costCents(cost)} / ${cents(max)}` : costCents(cost),
         ...(rate !== undefined ? [`${cents(rate)}/min`] : []),
         ...(hit !== undefined ? [`${Math.round(hit * 100)}% cache hit`] : []),
       ].join(" · "),
-      ...(segments.length > 0 ? { segments } : {}),
       ...(live(s) && max !== undefined && cost.usd >= max * SPEND_WARN_AT
         ? { tone: "warn" as const }
         : {}),
@@ -532,15 +534,11 @@ function costBar(s: SwarmSummary, now: Date): Bar[] {
 }
 
 // What the swarm is beside how far it has run, so a swarm started by an agent explains itself.
-export function shapeBlock(
-  s: SwarmSummary,
-  now = new Date(),
-  opts: { crew?: boolean } = {},
-): Section {
+export function shapeBlock(s: SwarmSummary, now = new Date()): Section {
   return {
     kind: "columns",
     columns: [
-      { weight: 5, sections: [{ kind: "cards", items: [shapeCard(s, opts.crew === true)] }] },
+      { weight: 5, sections: [{ kind: "cards", items: [shapeCard(s)] }] },
       {
         weight: 7,
         sections: [
@@ -558,8 +556,7 @@ export function shapeBlock(
 
 export const openRecord = (s: SwarmSummary) => ({
   type: "open-record",
-  label: "Timeline",
-  glyph: "◷",
+  label: "Record",
   hint: "The swarm's timeline, who woke whom, spend, runs, evidence and Activity.",
   payload: { id: s.id },
 });
@@ -580,6 +577,12 @@ function controls(s: SwarmSummary): Leaf[] {
 
 // ---- Ended agents and the live map. ----
 
+// The lead's role opens with its own title, which the card already shows.
+function roleLine(role: string): string {
+  const line = firstLine(role.replace(/^lead:\s*/i, ""), 64);
+  return line.charAt(0).toUpperCase() + line.slice(1);
+}
+
 function agentCard(
   s: SwarmSummary,
   a: SwarmSummary["agents"][number],
@@ -588,32 +591,32 @@ function agentCard(
   const pinned = a.model && a.model !== (a.lead ? s.model : (s.workerModel ?? s.model));
   const cost = agentCost(a);
   const tokens = a.usage
-    ? `${tokenCount(freshTokens(a.usage))} tokens${cost ? ` · ${costText(cost)}` : ""}`
+    ? `${tokenCount(freshTokens(a.usage))} tokens${cost ? ` · ${costCents(cost)}` : ""}`
     : undefined;
   const turns = a.lead
     ? plural(a.turns, "turn")
     : `${a.turns} of ${s.limits.maxTurnsPerAgent} turns`;
-  const last = [...(s.activity ?? [])].reverse().find((e) => e.actor === a.id);
+  // An ended bench reads as a summary, so every card states its turns the same way.
+  const metered = live(s) && !a.lead;
   const foot = [
-    ...(last
-      ? [`last: ${firstLine(actorText(s.id, last.text, a.id), 40)} · ${hhmm(last.at)}`]
+    ...(a.spawnedBy && !s.agents.some((x) => x.lead && x.handle === a.spawnedBy)
+      ? [`spawned by @${shortHandle(a.spawnedBy, s.id)}`]
       : []),
-    ...(a.spawnedBy ? [`spawned by @${shortHandle(a.spawnedBy, s.id)}`] : []),
     ...(a.queued ? [`${plural(a.queued, "message")} waiting`] : []),
     ...(a.servedModel && a.servedModel !== a.model ? [`served by ${a.servedModel}`] : []),
   ];
   return {
     title: shortHandle(a.handle, s.id),
-    titleTone: a.tone,
     action: { type: "select-agent", payload: { id: s.id, agentId: a.id } },
     ...(a.id === selectedAgentId ? { selected: true } : {}),
     ...(live(s) ? { pill: AGENT_PILL[a.status] } : {}),
-    ...(a.lead
-      ? {}
-      : { bar: { value: a.turns, total: s.limits.maxTurnsPerAgent, trailing: turns } }),
+    ...(metered
+      ? { bar: { value: a.turns, total: s.limits.maxTurnsPerAgent, trailing: turns } }
+      : {}),
+    prose: true,
     fields: [
-      { value: firstLine(a.role, 64) },
-      ...(a.lead
+      { value: roleLine(a.role) },
+      ...(!metered
         ? [{ value: tokens ? `${turns} · ${tokens}` : turns }]
         : tokens
           ? [{ value: tokens }]
@@ -847,16 +850,6 @@ function costKinds(s: SwarmSummary) {
     kinds.read += read;
   }
   return priced ? kinds : undefined;
-}
-
-// The Usage page's order and colors: cache read, input, cache write, output.
-function kindSegments(kinds: NonNullable<ReturnType<typeof costKinds>>): Segment[] {
-  return [
-    { label: `cache read ${usd(kinds.read)}`, n: kinds.read, tone: "ramp-1" as const },
-    { label: `input ${usd(kinds.input)}`, n: kinds.input, tone: "accent" as const },
-    { label: `cache write ${usd(kinds.write)}`, n: kinds.write, tone: "caution" as const },
-    { label: `output ${usd(kinds.output)}`, n: kinds.output, tone: "ok" as const },
-  ].filter((k) => k.n > 0);
 }
 
 function costByKind(s: SwarmSummary): Leaf[] {
@@ -1126,16 +1119,13 @@ function conversation(s: SwarmSummary): Leaf[] {
       items: [
         ...entries.map((m): Row => {
           const person = actorPerson(s, m.author);
-          const href = threadHref(s, m.threadRootId ?? m.id);
           return {
             ...(person ? { person } : {}),
-            text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text)}`,
-            trailing: hhmm(m.at),
-            ...(href ? { href } : {}),
+            text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text, 120, person?.name)}`,
+            trailing: hhmmss(m.at),
           };
         }),
         {
-          icon: "▤",
           text: `${plural(s.messageCount ?? s.recent.length, "message")} · transcript ↗`,
           ...(href ? { href } : {}),
         },
@@ -1205,7 +1195,6 @@ function reportKb(s: SwarmSummary): string {
 export const openReport = (s: SwarmSummary) => ({
   type: "open-report",
   label: "Open the report",
-  glyph: "◧",
   tone: "brand" as const,
   payload: { id: s.id },
 });
@@ -1241,11 +1230,7 @@ function conclusionCard(s: SwarmSummary, conclusion: string): Card {
         copyAction: { type: "copy-conclusion", payload: { id: s.id } },
       },
     ],
-    footnote: [
-      `by @${leadHandle(s)}${when}`,
-      `${conclusion.length.toLocaleString("en-US")} characters`,
-      ...(s.report ? [reportKb(s)] : []),
-    ].join(" · "),
+    footnote: [`by @${leadHandle(s)}${when}`, ...(s.report ? [reportKb(s)] : [])].join(" · "),
     ...(s.report ? { actions: [openReport(s)] } : {}),
   };
 }
@@ -1317,7 +1302,10 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
   const faces = agentFaces(s);
   const faceOf = (id: string) =>
     id === "operator" ? "Y" : faces[s.agents.findIndex((a) => a.id === id)];
-  const lanes = model.lanes.slice(0, 12).map(({ id, label, tone, group }) => {
+  const heard = model.marks.some((m) => m.lane === "operator");
+  const others = model.lanes.filter((lane) => lane.id !== "operator");
+  const shown = heard || others.length === 0 ? model.lanes : others;
+  const lanes = shown.slice(0, 12).map(({ id, label, tone, group }) => {
     const face = faceOf(id);
     return { id, label, ...(face ? { face } : {}), tone, ...(group ? { group } : {}) };
   });
@@ -1326,13 +1314,13 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     .filter((item) => ids.has(item.lane))
     .sort((a, b) => Date.parse(a.from) - Date.parse(b.from))
     .slice(-400)
-    .map(({ lane, from, to, tone, hatched, title }) => ({
+    .map(({ lane, from, to, tone, hatched, title, short }) => ({
       lane,
       from,
       ...(to ? { to } : {}),
       ...(tone ? { tone } : {}),
       ...(hatched ? { hatched } : {}),
-      title,
+      title: short ?? title,
     }));
   const marks = model.marks
     .filter((item) => ids.has(item.lane))
@@ -1340,7 +1328,7 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     .slice(-200)
     .map(({ lane, at, glyph, title }) => ({ lane, at, glyph, title }));
   const clipped = [
-    ...(lanes.length < model.lanes.length ? [`${lanes.length}/${model.lanes.length} lanes`] : []),
+    ...(lanes.length < shown.length ? [`${lanes.length}/${shown.length} lanes`] : []),
     ...(spans.length < model.spans.length ? [`${spans.length}/${model.spans.length} spans`] : []),
     ...(marks.length < model.marks.length ? [`${marks.length}/${model.marks.length} marks`] : []),
   ];
@@ -1357,23 +1345,32 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     lanes,
     spans,
     marks,
-    legend:
-      "Bars are turns in each agent's color, hatched when timed out or failed, open while unfinished. ○ spawned · ? asked you · ▲ you · ▪ report · ● conclusion · ◇ gate opened · ◆ gate answered · ✓ verified. Timeline holds the full retained record.",
+    legend: [
+      `Bars are turns${spans.some((span) => span.hatched) ? ", hatched when one failed" : ""}.`,
+      legendKeys(marks.map((m) => m.glyph)).join(" · "),
+    ]
+      .filter(Boolean)
+      .join(" "),
   };
 }
 
-// A factory swarm's 12-hour backstop would squash every turn into the left edge,
-// so its axis runs a little past now and grows as the swarm does.
+// A deadline axis would squash every turn into the left edge, so the axis runs
+// a little past now and grows as the swarm does; the Time meter keeps the deadline.
 const FACTORY_AXIS_MS = 30 * 60_000;
+const LIVE_AXIS_MS = 60_000;
+const LIVE_MARGIN_MS = 30_000;
+const LIVE_STEP_MS = 15_000;
 function timelineUntil(s: SwarmSummary, now: Date): string {
   const start = Date.parse(s.startedAt);
   const clock = start + s.limits.wallClockMs;
-  if (!s.factory) return new Date(clock).toISOString();
+  const step = s.factory ? FACTORY_AXIS_MS : LIVE_AXIS_MS;
   const elapsed = Math.max(0, now.getTime() - start);
-  const span = Math.max(
-    FACTORY_AXIS_MS,
-    Math.ceil((elapsed * 1.5) / FACTORY_AXIS_MS) * FACTORY_AXIS_MS,
-  );
+  const span = s.factory
+    ? Math.max(step, Math.ceil((elapsed * 1.5) / step) * step)
+    : Math.max(
+        2 * LIVE_AXIS_MS,
+        Math.ceil((elapsed + LIVE_MARGIN_MS) / LIVE_STEP_MS) * LIVE_STEP_MS,
+      );
   return new Date(Math.min(clock, start + span)).toISOString();
 }
 
@@ -1435,11 +1432,21 @@ function conversationTab(s: SwarmSummary): Leaf[] {
 export function buildCockpit(
   s: SwarmSummary,
   needs: readonly Need[],
-  opts: { server?: ServerLine; titled: boolean; now?: Date; selectedAgentId?: string },
+  opts: {
+    server?: ServerLine;
+    titled: boolean;
+    now?: Date;
+    selectedAgentId?: string;
+    // The page already shows this swarm's requests, so the state line and pill would repeat them.
+    asksAbove?: boolean;
+  },
 ): Section[] {
   const now = opts.now ?? new Date();
   const people = crewPeople(s);
-  const line = stateLine(s, needs, opts.server, { quiet: true });
+  const line =
+    opts.asksAbove && needs.length > 0
+      ? { text: "", warn: false }
+      : stateLine(s, needs, opts.server, { quiet: true });
   const items: Extract<Leaf, { kind: "actions" }>["items"] = [];
   if (s.report) items.push(openReport(s));
   items.push(openRecord(s), openDetails(s));
@@ -1451,9 +1458,10 @@ export function buildCockpit(
       ...(opts.titled ? { title: "Live" } : {}),
       items: [
         {
-          title: `${firstLine(s.task)} · ${s.id}`,
-          pill: needs.length ? { label: "needs you", tone: "caution" } : livePill(s),
-          ...(needs.length ? { edge: "caution" as const } : {}),
+          title: `${taskHead(s.task)} · ${s.id}`,
+          pill:
+            needs.length && !opts.asksAbove ? { label: "needs you", tone: "caution" } : livePill(s),
+          ...(needs.length && !opts.asksAbove ? { edge: "caution" as const } : {}),
           ...(people.length ? { fields: [{ people }] } : {}),
         },
       ],
@@ -1488,7 +1496,7 @@ export function buildCockpit(
       {
         label: "Spend",
         ...(cost
-          ? { badge: costText(cost) }
+          ? { badge: costCents(cost) }
           : s.usage
             ? { badge: tokenCount(freshTokens(s.usage)) }
             : {}),
@@ -1518,7 +1526,7 @@ function endedSections(s: SwarmSummary, now: Date, opts: BoardOptions): Section[
   const aboutLeaf = about(s);
   return [
     ...outcome(s),
-    shapeBlock(s, now, { crew: true }),
+    shapeBlock(s, now),
     ...resultExtras(s),
     ...verbs(s, opts.launch),
     ...tabbed([
@@ -1530,7 +1538,7 @@ function endedSections(s: SwarmSummary, now: Date, opts: BoardOptions): Section[
       {
         label: "Spend",
         ...(cost
-          ? { badge: costText(cost) }
+          ? { badge: costCents(cost) }
           : s.usage
             ? { badge: tokenCount(freshTokens(s.usage)) }
             : {}),
@@ -1569,7 +1577,7 @@ export function buildSwarmBoard(s: SwarmSummary, opts: BoardOptions = {}): Canva
   const details = liveDetails(s, opts.selectedAgentId);
   return {
     view: "board",
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: taskHead(s.task, 110),
     header: {
       status: pill,
       ...(chip ? { chip } : {}),
@@ -1595,7 +1603,7 @@ export function buildStartingBoard(s: StartingSwarm): CanvasBoardView {
   const shape = { ...s, size: sizeOf(s.limits, s.sizeBase), agents: [] };
   return {
     view: "board",
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     header: { status: { label: "starting", tone: "neutral" } },
     sections: [
       {

@@ -22,12 +22,15 @@ oldest first. When more than 12 requests are open, it shows the oldest 12 and
 names the total in its heading. Each card leads with the request:
 
 - the title is the request itself: **Review the plan for …**, **@planner
-  asked: …**, **ClickClack stopped answering**, or **No agent has worked since
+  asks** with the question below it, **ClickClack stopped answering**, or **No agent has worked since
   21:48**
 - the first line says what happened and why it is yours, then how long it has
   waited (**opened 4 min ago**, **asked 2 min ago**), kept current by a live
   clock
-- the footnote names the task and swarm id
+- the footnote names the task and swarm id; a question's title carries the
+  swarm id instead, and its first button is **Reply**, since the question is
+  already on the card; **Read question** appears only when the card shows part
+  of it
 - the first button is the request's verb: **Review plan**, **Read question**,
   **Open swarm**, or **Message the lead**; replies and dismissal appear when
   they apply, and **Open swarm** expands the swarm on the page
@@ -48,7 +51,7 @@ One live swarm expands on the page as a cockpit. It runs in this order:
 5. **Timeline | Map** tabs.
 6. **Conversation | Spend | Activity** tabs.
 7. **Produced so far**.
-8. **Open the report** when one exists; **Timeline**; **Details**; and
+8. **Open the report** when one exists; **Record**; **Details**; and
    **Stop swarm…** last.
 
 Each agent is a face in its identity tone with its initial, two letters where
@@ -62,9 +65,8 @@ the plan (**Scout**, **Crew**, **Fleet**), seats in use of the plan's agents, an
 the models, lead first, then workers grouped by model with a count. On the
 right, meters against their ceilings: **Turns** (with the forecast's reading
 after the count), **Time** (minutes left and when it ends), **Fresh tokens**
-when a token ceiling is set, and **Cost** when the host prices tokens, split by
-kind in the Usage page's order (cache read, input, cache write, output) with its
-spend rate and cache hit. A meter warns past 80% of a ceiling or when the
+when a token ceiling is set, and **Cost** when the host prices tokens, one fill
+with its spend rate and cache hit (the Spend tab splits it by kind). A meter warns past 80% of a ceiling or when the
 forecast runs out before the clock.
 
 Each tab carries a count or total. A group with one non-empty tab shows its
@@ -77,14 +79,19 @@ Model column, since the shape block names the models.
 
 Timeline is a native section in the Timeline tab beside Map, on the live cockpit only,
 not the per-swarm drawer or ended board. It requires Keelson v0.125.0 or later.
-The operator's lane comes first, then agents in first-worked order, then runs.
+The operator's lane comes first once you have posted or answered, then agents in
+first-worked order, then runs.
 Turns use the agent's identity color, with hatching for timeouts or errors and
 open endpoints for unfinished work. Run bars use status colors.
 Marks show spawns (○), questions (?), operator posts and answers (▲), reports
-(▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
-Nudges, caps and retirements keep their existing marks.
+(■), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
+Nudges, caps and retirements keep their existing marks. The legend, here and on
+the record, lists only the marks that timeline draws.
 
-The live window starts at `startedAt` and its clock ends at `startedAt + wallClockMs`.
+The live window starts at `startedAt` and its clock runs 30 seconds past now,
+rounded up to 15 seconds and at least 2 minutes (half again past the elapsed
+time, at least 30 minutes, for a factory swarm), and never past
+`startedAt + wallClockMs`.
 When `endedAt` is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
@@ -93,7 +100,7 @@ Timeline keeps at most **12 lanes, 400 spans and 200 marks**. It keeps the opera
 then first-worked agents, then runs; it retains the newest eligible spans and
 marks with stable timestamp sorts. Items on omitted lanes are removed.
 The title names shown/total counts for each clipped dimension, including items
-lost with omitted lanes. **Timeline** opens the record with additional lanes and events.
+lost with omitted lanes. **Record** opens the record with additional lanes and events.
 The record keeps the full retained timeline, with its own snapshot window and
 drawing. Native clipping does not remove its lanes or events.
 
@@ -142,11 +149,12 @@ The model/provider is the one actually served. Missing evidence says
 Provenance names the parent and join time. Writers show worktree, branch,
 draft PR and observed CI, with an **Open PR** link.
 
-**Said** is this agent's recent messages only, newest first, each linked to
-its thread. **Turns** shows its newest 40 recorded spans first and names the
-total when older turns are hidden. **Timeline** opens the record with every recorded
+**Said** is this agent's recent messages only, newest first, each opening to
+its full text. **Turns** shows its newest 40 recorded spans first, with
+HH:MM:SS times and the swarm's date in its heading, and names the
+total when older turns are hidden. **Record** opens the record with every recorded
 turn on the timeline. The quiet
-**its messages · transcript ↗** link opens the channel, not a complete
+**Transcript ↗** link opens the channel, not a complete
 agent-only message history.
 
 **Message @agent** posts as you with the roster's full handle mentioned,
@@ -280,12 +288,13 @@ It retains the numeric used count and existing sparkline.
 
 - **Conversation** shows at most eight rows, newest first. Each has the
   author's short handle in its identity color, or neutral **you** for an
-  operator post; a reply starts with **↳**. Its **HH:MM** time sits at the
-  end, and the row links to its thread. The final row reads **23 messages ·
+  operator post; a reply starts with **↳**. Its **HH:MM:SS** time sits at the
+  end. Rows are plain text, without leading @addresses, message ids or the
+  author's own "name:" label, cut at a word. The final row reads **23 messages ·
   transcript ↗**, using the swarm's count and linking the channel.
 
 The rib keeps only the newest 20 messages, oldest first, and the first
-200 characters of each. A row shows its first line, at most 90 characters,
+200 characters of each. A row shows its first line, at most 120 characters,
 as plain field text: emphasis and code marks come off, but HTML and markdown
 links stay literal. The status tools and the durable op record leave the
 recent-message buffer out; `messageCount` counts every ingested message.
@@ -346,18 +355,18 @@ under **Also live** and open their starting board.
 ### Ended swarms
 
 Ended swarms are rows grouped under the day they ended: **Today**,
-**Yesterday**, then the weekday and date. A row leads with the task, then
-**·** and what came of the swarm:
+**Yesterday**, then the weekday and date. A row with a report leads with the
+report's title. Any other leads with the task, then **·** and what came of the
+swarm:
 
-- the report's title, when the lead published one
-- else the conclusion's first sentence
+- the conclusion's first sentence
 - else why it ended: **Stopped by you**, **Out of turns at 40**, **Failed: …**
 
 A done row carries a check; stopped, stalled, out of budget and failed rows
 carry a chip, so the ones that did not finish stand out. ↻ marks a swarm
-started with **Retry** or **Go deeper**. The trailing names the turns, how
-long it ran, when it ended, how many of its runs verified, and
-**◧ report** when a report exists. The index shows the latest eight, and the
+started with **Retry** or **Go deeper**. The trailing names how
+long it ran, its cost, when it ended, how many of its runs verified, and
+**report** when a report exists. The index shows the latest eight, and the
 last row opens the rest in the same day groups. The rib keeps the last 50 in
 its data directory, so they survive a restart.
 
@@ -408,7 +417,7 @@ Live, the board runs in this order:
 - the same full-width **Map**, then **Conversation**, with the newest eight
   messages and transcript link as the cockpit, followed by the eligible
   **Message the lead** composer
-- **Timeline**, **Details** and **Stop swarm…** at the far end of the row.
+- **Record**, **Details** and **Stop swarm…** at the far end of the row.
   The **Message the lead** form under Conversation posts in the channel as
   you and wakes the lead. Its placeholder reads **posts as you, wakes the
   lead**. The button reads **Sending…** until the note is posted, the toast
@@ -416,7 +425,7 @@ Live, the board runs in this order:
   **you posted in #swarm-<id>: …**
 
 Ended, the board reads like the live card. In order: the **Outcome**; the
-shape block, with the crew as faces in its plan card and the meters stopped
+shape block, with the agent count in its plan card and the meters stopped
 where the swarm ended; **Result** when the swarm opened pull requests, merged
 work or ran workflows (Pull requests when eligible, Merged for a local write
 swarm, then Runs verified only when runs exist); the actions; then **Agents**,
@@ -441,7 +450,7 @@ A URL counts as passing only when every recorded owner explicitly reports
 pass. Run CI must also identify the same PR URL. A verified run is not a
 substitute for CI evidence. Live boards omit the Pull requests tile.
 
-The actions strip is Retry or Go deeper, Timeline, Details.
+The actions strip is Retry or Go deeper, Record, Details.
 Retry and Go deeper are omitted when retained launch inputs are unavailable.
 
 The outcome is one card. When the lead published a report, the card carries
@@ -458,14 +467,14 @@ Live details do not repeat an agent bench. The remaining details depend on
 the lifecycle:
 
 - **Agents** (ended only, the first tab): proportional identity-colored agent cards with
-  turns, role, tokens and the last event. They select the same read-only
+  turns, role and tokens. They select the same read-only
   inspector, without monospace/stacked cards or ghost seats.
 - **Spend**, once an agent has spent: a table
   of each agent's model and provider (the cockpit and ended board leave the
   model column to the shape block), ↑ in, ↓ out, cached tokens, cache hit,
   cost and share, with a swarm row, then **Cost by kind** split into input,
   cache write, output and cache read. The record also keeps
-  Spend by agent, with fresh and cached tokens apart.
+  Tokens by agent, with fresh and cached tokens apart.
 - **Produced so far** while live, **Produced** once ended: reports,
   dispatched runs, writer draft PRs, and, once ended, kept worktrees, as
   described below
@@ -481,7 +490,7 @@ the lifecycle:
   to Ended swarms is a separate row outside About. The transcript link is
   omitted when its address is unavailable.
 
-Timeline reaches Activity as well as the timeline and spend.
+Record reaches Activity as well as the timeline and spend.
 
 Task and context disclosures live in Details, not on the cockpit or
 per-swarm board. Setup and live health evidence also live in Details.
@@ -543,7 +552,7 @@ reads Keelson's canvas design guide first, and the page follows the same rules
 as Keelson's canvas artifacts, so it matches the app's theme in light and dark.
 The cockpit offers **Open the report** once the page exists, even while the
 swarm is still running. A folded card offers **Report**, and an ended row marks
-it with **◧ report**. The lead skips the report when the whole answer fits in a
+it with **report**. The lead skips the report when the whole answer fits in a
 sentence or two.
 
 **Read the draft** opens the reading pane with the lead's refused draft and
@@ -553,22 +562,25 @@ board preview.
 
 ## A swarm's record
 
-**Timeline** shows the swarm's record, a page the rib draws, live or ended. It
+**Record** shows the swarm's record, a page the rib draws, live or ended. It
 answers what happened, in what order, by whom, and at what cost:
 
 - **Timeline**: a lane per agent in the order they first worked, yours above
-  and one per run below. Each turn is a bar in the agent's color, from its
+  when you posted or answered, and one per run below. Each turn is a bar in the agent's color, from its
   start to its end, hatched when it timed out or failed and dashed while it
   runs. Marks show when an agent was spawned (○), asked you something (?), when
-  you posted or answered (▲), the report (▪), the conclusion (●), a run's gate
+  you posted or answered (▲), the report (■), the conclusion (●), a run's gate
   opening and being answered (◇ ◆), and a verified run (✓); hover any bar or
-  mark for its detail. Live, a rule marks now and the right edge names when the
-  swarm's clock runs out; ended, a rule marks when it ended.
+  mark for its detail. Live, a rule marks now and the axis runs a little past it,
+  growing as the swarm runs; ended, the axis stops at the last event, counted
+  in seconds under two minutes, and a rule marks when it ended.
 - **Who woke whom**: the agents as nodes in their colors, you and the runs
-  beside the lead, a straight arrow for each spawn and a curve for the turns
-  one side started, counted
-- **Spend by agent**: fresh tokens, then cached tokens in a lighter bar after
-  them
+  beside the lead, a straight arrow for each spawn counting the parent's later
+  wakes, and a curve for the turns one side started, counted; two workers on one
+  row share one curve below it, with an arrowhead for each way that woke and
+  each count beside its arrowhead
+- **Tokens by agent**: fresh tokens, then cached tokens in a lighter bar after
+  them, with each agent's cost
 - **Runs**: each run in full, with its branch, every pull request, its CI
   verdict and detail, its steps, how long it took, each gate it paused at, who
   answered it, and why
@@ -584,7 +596,9 @@ when the swarm's course changes, at most every five seconds. Swarms that ended
 before this page existed show their events and runs but no turn bars, since
 their turns were not kept.
 The record shares timeline lanes, spans, marks and their titles with the cockpit,
-not its deadline window or native rendering.
+not its deadline window or native rendering. The cockpit titles a turn bar only
+turn N (and timeout or error), since the host prints a span's title inside it;
+the record keeps the full title on hover.
 
 ## Starting a swarm
 
@@ -680,7 +694,7 @@ The switch and initialization create no grants. The rib never runs `bd init`
 itself; the host-owned beads tool initializes and refreshes the tracker.
 Existing-project starts, Retry and Go deeper do not initialize a tracker.
 
-With no project selected, the **ALSO ALLOW** group is absent. Selecting an
+With no project selected, the **Also allow** group is absent. Selecting an
 existing project reveals **Write**, **Run workflows** and **Use the tracker**,
 all off.
 
@@ -717,13 +731,13 @@ records switch intent, not a promise that every tracker tool was granted.
 
 **Size** offers three plans. **Scout is selected by
 default**. Each card shows its agents, cost ceiling, minutes and the effective
-provider's models, and, once that plan has run here, its median and highest cost. Beside the figures, every card lists a Lead row and a Workers
+provider's models, and, once that plan has run here, its median and highest cost (a plan without runs says so once any plan has them). Beside the figures, every card lists a Lead row and a Workers
 row, even when they name the same model. Providers without pins use the matching
 class model.
 
 | Plan | For | Agents | Turns | Minutes |
 | --- | --- | --- | --- | --- |
-| Scout | A narrow question, or a first pass before a bigger run. | 3 | 20 | 15 |
+| Scout | A narrow question, or a first pass. | 3 | 20 | 15 |
 | Crew | Most tasks: investigate, debate, and decide. | 5 | 40 | 30 |
 | Fleet | Wide or hard problems that are worth the spend. | 8 | 80 | 60 |
 

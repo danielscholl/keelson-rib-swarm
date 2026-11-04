@@ -16,6 +16,11 @@ export function hhmm(iso: string | undefined): string {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
+export function hhmmss(iso: string | undefined): string {
+  if (!iso) return "";
+  return `${hhmm(iso)}:${String(new Date(iso).getSeconds()).padStart(2, "0")}`;
+}
+
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function day(iso: string): string {
@@ -56,13 +61,24 @@ export function gist(markdown: string, max: number): string {
   if (sentence.length <= max) return sentence;
   const cut = sentence.slice(0, max - 1);
   const word = cut.lastIndexOf(" ");
-  return `${(word > max / 2 ? cut.slice(0, word) : cut).replace(/[\s,;:]+$/, "")}…`;
+  return `${(word > max / 2 ? cut.slice(0, word) : cut).replace(/[\s.,;:]+$/, "")}…`;
 }
 
 // The first line of a task, cut to fit a card title.
 export function firstLine(text: string, max = 72): string {
   const line = text.trim().split("\n")[0]?.trim() ?? "";
   return line.length > max ? `${line.slice(0, max - 1).trimEnd()}…` : line;
+}
+
+// A task's first sentence, so titles end on a whole thought.
+export function taskHead(task: string, max = 72): string {
+  const line = firstLine(task, 1000);
+  const end = line.search(/[.?!]\s/);
+  const head = (end >= 16 ? line.slice(0, end + 1) : line).replace(/\.$/, "");
+  if (head.length <= max) return head;
+  const cut = head.slice(0, max - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:]+$/, "")}…`;
 }
 
 // Inside a swarm's own views the id is already named, so handles drop it.
@@ -125,8 +141,21 @@ export function activityText(swarmId: string, text: string): string {
 }
 
 // Field text renders as is: links and HTML stay literal, not clickable markup.
-export function messageLine(swarmId: string, text: string, max = 90): string {
-  return firstLine(plain(activityText(swarmId, text)), max);
+// A preview row: no leading @addresses, message ids, or the author's own name as a label, cut at a word.
+export function messageLine(swarmId: string, text: string, max = 120, author?: string): string {
+  let line = firstLine(plain(activityText(swarmId, text)), 1000)
+    .replace(/\s*\(?\bmsg_[a-z0-9]+\)?/gi, "")
+    .replace(/^(?:@[\w.-]+[,:]?\s+)+/, "");
+  const label = author ? line.match(/^@?([\w.-]+?)(?:[:,]|'s?)\s+/) : null;
+  const bare = author ? line.match(/^@?([\w.-]+)\s+/) : null;
+  // A bare opening word counts only in the author's own casing, so "Rounding seam" stays whole.
+  if (label && label[1]?.toLowerCase() === author?.toLowerCase())
+    line = line.slice(label[0].length);
+  else if (bare && bare[1] === author) line = line.slice(bare[0].length);
+  if (line.length <= max) return line;
+  const cut = line.slice(0, max - 1);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:]+$/, "")}…`;
 }
 
 // An activity line under its actor's chip: the handle or "you" it starts with

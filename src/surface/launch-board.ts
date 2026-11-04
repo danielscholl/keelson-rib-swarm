@@ -76,7 +76,7 @@ export function modelField(model?: string, provider?: string): Field {
 const PLANS = [
   {
     name: PLAN_NAME.small,
-    blurb: "A narrow question, or a first pass before a bigger run.",
+    blurb: "A narrow question, or a first pass.",
     size: "small",
     power: "fast",
   },
@@ -134,8 +134,8 @@ function factorySummary(size: SwarmSize): string {
   return `${SIZE_PRESETS[size].maxAgents} agents until work stops landing or $${PLAN_COST_USD[size]}`;
 }
 
-function historyLine(history: PlanHistory | undefined): string {
-  if (!history) return "";
+function historyLine(history: PlanHistory | undefined, anyHistory: boolean): string {
+  if (!history) return anyHistory ? `<span class="plan-history">Here: no runs yet</span>` : "";
   const runs = history.runs === 1 ? "1 run" : `${history.runs} runs`;
   return `<span class="plan-history">Here: median ${cents(history.median)} · highest ${cents(history.highest)} · ${runs}</span>`;
 }
@@ -145,58 +145,65 @@ const FACTORY_MEANING = `Keeps the swarm running while work lands: merges, pull 
 const PAGE_CSS = `
 :root { --button-ink: var(--bg); }
 :root[data-theme="light"] { --button-ink: var(--card); }
+html, body { background: transparent; }
 body { font-size: 14px; }
 * { box-sizing: border-box; }
-main { margin: 0; background: var(--card); }
-header { display: flex; align-items: center; gap: 14px; padding: 24px; flex-wrap: wrap; }
+main { margin: 0; }
+header { display: flex; align-items: center; gap: 14px; padding: 20px 24px 16px; flex-wrap: wrap; }
 .compact { display: flex; align-items: center; gap: 12px; padding: 16px; }
 .compact input { flex: 1; min-width: 0; width: auto; }
 .compact input::placeholder { color: var(--muted); opacity: 1; }
 .compact .start, .more { flex: none; white-space: nowrap; }
-.more { padding: 6px 0; border: 0; background: transparent; color: var(--fg); }
+.more { padding: 6px 2px; border: 0; background: transparent; color: var(--muted); font-weight: 500; }
+.more:hover { color: var(--fg-strong); }
 .intro { flex: 1; min-width: 220px; }
-h1 { font-size: 22px; line-height: 1.3; margin: 0 0 5px; color: var(--fg-strong); }
 p { margin: 0; }
-.hint { color: var(--muted); font-size: 13px; }
+.hint { color: color-mix(in srgb, var(--fg) 60%, var(--muted)); font-size: 13px; }
 button, textarea, select, input { font: inherit; }
-button { cursor: pointer; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; }
+button { cursor: pointer; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: transparent; color: var(--fg); }
+button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
 .fields { padding: 0 24px 24px; }
-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: .08em; margin-bottom: 8px; }
+label { display: block; font-size: 13px; font-weight: 600; color: var(--fg-strong); margin-bottom: 8px; }
 textarea, select, input { display: block; width: 100%; border: 1px solid var(--border);
-  border-radius: 8px; padding: 12px; color: var(--fg); background: var(--bg); }
-textarea { resize: vertical; min-height: 112px; line-height: 1.5; }
+  border-radius: 10px; padding: 11px 12px; color: var(--fg); background: transparent;
+  transition: border-color .12s ease, box-shadow .12s ease; }
+textarea:hover, select:hover, input:hover { border-color: color-mix(in srgb, var(--fg) 22%, var(--border)); }
+textarea:focus, select:focus, input:focus { outline: none; border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+textarea { resize: vertical; min-height: 92px; line-height: 1.5; }
 textarea::placeholder { color: var(--muted); opacity: 1; }
 .task-hint { margin-top: 8px; }
 .task-hint:empty { display: none; }
-.plans { margin-top: 24px; }
+.plans { margin-top: 20px; }
 .plans-heading { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .08em; }
-.chip { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.plan[aria-pressed="true"] .chip { color: var(--accent); }
+.eyebrow { font-size: 13px; font-weight: 600; color: var(--fg-strong); }
 .chevron { display: inline-block; margin-left: 6px; }
 .plan-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.plan { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 16px; background: var(--bg); color: var(--fg); }
-.plan[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.plan { display: flex; flex-direction: column; justify-content: flex-start; text-align: left; padding: 16px;
+  border-radius: 12px; background: transparent; color: var(--fg); transition: border-color .12s ease, background .12s ease; }
+.plan[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .plan-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--fg-strong); }
-.plan-blurb { display: block; margin-top: 8px; color: var(--muted); line-height: 1.5; min-height: 4.5em; }
-.plan-body { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; margin-top: 16px; }
-.figures { display: flex; gap: 14px; flex: none; }
+.plan-blurb { display: block; margin-top: 6px; color: color-mix(in srgb, var(--fg) 60%, var(--muted)); line-height: 1.5; min-height: 1.5em; }
+.plan-body { display: flex; flex-direction: column; align-items: stretch; gap: 14px; margin-top: auto; padding-top: 16px; }
+.figures { display: flex; gap: 22px; flex: none; }
 .figure { color: var(--muted); font-size: 12px; }
-.plan-history { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; font-family: var(--mono); }
-.figure strong { display: block; font-size: 24px; line-height: 1.3; font-weight: 600; color: var(--fg-strong); }
-.plan-models { flex: 1; min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 8px;
-  align-items: baseline; border-left: 1px solid var(--border); padding-left: 14px; }
+.plan-history { display: block; color: color-mix(in srgb, var(--fg) 60%, var(--muted)); font-size: 12px; margin-top: 6px; }
+.figure strong { display: block; font-size: 22px; line-height: 1.25; font-weight: 600; color: var(--fg-strong);
+  font-variant-numeric: tabular-nums; }
+.plan-models { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px;
+  align-items: baseline; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 0; }
 .plan-models .role { font-family: var(--sans); font-size: 12px; color: var(--muted); }
-.plan-models .model { color: var(--fg); overflow-wrap: anywhere; }
+.plan-models .model { font-family: var(--sans); color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .plan-models .model.is-picked { color: var(--accent); font-weight: 600; }
-.pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 24px; }
+.pickers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 .detail { margin-top: 10px; line-height: 1.5; }
 .other-model { margin-top: 12px; }
 .project-note { margin-top: 10px; }
 .project-note:empty { display: none; }
 .new-project { margin-top: 16px; display: grid; gap: 12px; }
-.access { margin-top: 24px; }
-.access-heading { font-size: 12px; letter-spacing: .08em; margin: 0 0 8px; }
+.access { margin-top: 20px; }
+.access-heading { font-size: 13px; font-weight: 600; color: var(--fg-strong); margin: 0 0 8px; }
 .access-row { display: grid; grid-template-columns: 44px minmax(150px, 1fr) minmax(240px, 2fr);
   gap: 14px; align-items: center; padding: 16px 0; border-top: 1px solid var(--border); }
 .access-name { color: var(--fg-strong); font-weight: 600; }
@@ -209,28 +216,31 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .plans.is-factory .factory-only { display: block; }
 .plans.is-factory .bounded { display: none; }
 .figure.factory-only strong { font-size: 15px; line-height: 1.6; }
-.switch { width: 44px; height: 26px; padding: 3px; border-radius: 999px; background: var(--card-2); }
-.switch::after { content: ""; display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--muted); }
+.switch { width: 44px; height: 26px; padding: 3px; border-radius: 999px; background: color-mix(in srgb, var(--fg) 12%, var(--card)); border-color: transparent; }
+.switch::after { content: ""; display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--card);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 25%); transition: transform .15s ease; }
 .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
 .switch[aria-checked="true"]::after { background: var(--button-ink); transform: translateX(18px); }
 .switch:disabled { cursor: not-allowed; }
 .access-details { grid-column: 3; min-width: 0; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px;
-  border: 1px solid var(--border); border-radius: 6px; font: 12px var(--mono); color: var(--fg); background: var(--card-2); }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+  border: 1px solid var(--border); border-radius: 999px; font: 12px var(--mono); color: var(--fg); background: var(--card-2); }
 .chip.is-muted { color: var(--muted); border-style: dashed; background: transparent; }
 .chip button { padding: 0 4px; border: 0; background: transparent; color: var(--fg); }
 .workflow-input { width: 100%; min-width: 0; margin-top: 10px; padding: 8px 10px;
-  border: 1px dashed var(--border); border-radius: 6px; color: var(--fg); background: var(--bg); }
+  border: 1px dashed var(--border); border-radius: 10px; color: var(--fg); background: transparent; }
 .workflow-input::placeholder { color: var(--muted); opacity: 1; }
+#launch-cost::placeholder { color: var(--fg); opacity: 1; }
 .workflow-error { color: var(--fg); margin-top: 8px; }
 .workflow-count { margin-top: 8px; }
-footer { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 0 24px 24px; }
+footer { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; padding: 18px 24px 24px; border-top: 1px solid var(--border); }
 .start { background: var(--accent); color: var(--button-ink); border-color: var(--accent); font-weight: 600; }
+.start:hover:not(:disabled) { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 88%, var(--fg-strong)); }
 .start:disabled { cursor: wait; }
 .models { font-family: var(--mono); color: var(--muted); font-size: 12px; margin-top: 3px; overflow-wrap: anywhere; }
 .summary { flex: 1; min-width: 0; color: var(--muted); overflow-wrap: anywhere; }
-button:focus-visible, textarea:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 [hidden] { display: none !important; }
 @media (max-width: 900px) {
   .compact { flex-wrap: wrap; }
@@ -496,9 +506,15 @@ const PAGE_SCRIPT = `
     cards.forEach((card) => {
       const selected = size === card.dataset.size && power === card.dataset.power;
       card.setAttribute("aria-pressed", String(selected));
-      document.getElementById("chip-" + card.dataset.size).hidden = !selected;
       showModels(card, selected ? model : "", selected ? worker : "");
     });
+    const planCells = document.getElementById("models-" + size);
+    if (planCells) {
+      modelSelect.options[0].textContent = planCells.dataset.lead;
+      workerSelect.options[0].textContent = planCells.dataset.worker;
+    }
+    const planBudget = (factory ? factoryBudgets : budgets)[size];
+    document.getElementById("launch-cost").placeholder = planBudget.slice(planBudget.lastIndexOf("$")).split(/[s·]/)[0].trim();
     document.getElementById("launch-summary").textContent = summary();
     document.getElementById("launch-models").textContent = model && worker
       ? (model === worker ? " on " + model : " on " + model + " and " + worker)
@@ -880,7 +896,7 @@ function accessTemplate(state: LaunchState): string {
       ).join("")}</div>`,
     },
   ];
-  return `<template id="access-template"><section class="access" aria-labelledby="access-heading"><h2 class="access-heading" id="access-heading">ALSO ALLOW</h2>${rows
+  return `<template id="access-template"><section class="access" aria-labelledby="access-heading"><h2 class="access-heading" id="access-heading">Also allow</h2>${rows
     .map(
       (item) =>
         `<div class="access-row" id="${item.key}-row"><button class="switch" id="allow-${item.key}" type="button" role="switch" aria-label="${esc(item.name)}" aria-describedby="${item.key}-meaning" aria-checked="false"${item.disabled ? " disabled" : ""}></button><div class="access-name">${esc(item.name)}</div><p class="access-meaning" id="${item.key}-meaning">${esc(item.meaning)}</p>${item.details}</div>`,
@@ -898,8 +914,8 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
     const pair = models[plan.power];
     const selected = plan.size === DEFAULT_SIZE;
     return `<button class="plan" id="plan-${plan.size}" type="button" data-size="${plan.size}" data-power="${plan.power}" aria-pressed="${selected}">
-      <span class="plan-title">${plan.name}<span class="chip" id="chip-${plan.size}"${selected ? "" : " hidden"}>selected</span></span>
-      <span class="plan-blurb">${plan.blurb}</span>${historyLine(state.planCosts?.[plan.size])}
+      <span class="plan-title">${plan.name}</span>
+      <span class="plan-blurb">${plan.blurb}</span>${historyLine(state.planCosts?.[plan.size], Object.values(state.planCosts ?? {}).some(Boolean))}
       <span class="plan-body"><span class="figures"><span class="figure"><strong>${l.maxAgents}</strong>agents</span><span class="figure"><strong>$${PLAN_COST_USD[plan.size]}</strong>ceiling</span><span class="figure bounded"><strong>${l.wallClockMs / 60_000}</strong>min</span><span class="figure factory-only"><strong>until</strong>work stops</span></span>${pair ? `<span class="models plan-models" id="models-${plan.size}" data-lead="${esc(pair.lead)}" data-worker="${esc(pair.worker)}" data-pinned="${pair.pinned}">${modelCells(pair)}</span>` : ""}</span>
     </button>`;
   }).join("");
@@ -931,24 +947,24 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
     .join("");
   const expanded = `
   <header>
-    <div class="intro"><h1>New swarm</h1><p class="hint">Agents investigate, debate, and bring back a conclusion.</p></div>
+    <div class="intro"><p class="hint">Agents investigate, debate, and bring back a conclusion.</p></div>
     ${state.hasSwarms ? '<button class="more" id="launch-fewer" type="button" aria-controls="launch-root">Fewer options<span class="chevron" aria-hidden="true">⌃</span></button>' : ""}
   </header>
   <form id="launch-form" data-nonce="${esc(nonce)}" data-can-create-project="${Boolean(state.canCreateProject)}" data-can-init-tracker="${Boolean(state.canInitTracker)}" data-provider="${esc(state.provider ?? "")}" data-providers="${esc(JSON.stringify(catalog.map((c) => c.provider)))}" data-budgets="${esc(JSON.stringify(budgets))}" data-factory-budgets="${esc(JSON.stringify(factoryBudgets))}">
     <div class="fields">
-      <label for="launch-task">TASK</label>
-      <textarea id="launch-task" name="task" rows="4" required aria-describedby="task-hint" placeholder="${esc(TASK_PLACEHOLDER)}"></textarea>
+      <label for="launch-task">Task</label>
+      <textarea id="launch-task" name="task" rows="3" required aria-describedby="task-hint" placeholder="${esc(TASK_PLACEHOLDER)}"></textarea>
       <p class="hint task-hint" id="task-hint" aria-live="polite"></p>
       <section class="plans" id="plans" aria-labelledby="plans-heading">
-        <div class="plans-heading"><span class="eyebrow" id="plans-heading">SIZE</span><span class="factory-toggle" id="factory-row"><span id="factory-label">Factory mode</span><button class="more factory-info" id="factory-info" type="button" aria-label="About Factory mode" aria-controls="factory-hint" aria-expanded="false" title="${esc(FACTORY_MEANING)}">ⓘ</button><button class="switch" id="launch-factory" type="button" role="switch" aria-labelledby="factory-label" aria-describedby="factory-meaning" aria-checked="false"></button></span></div>
+        <div class="plans-heading"><span class="eyebrow" id="plans-heading">Size</span><span class="factory-toggle" id="factory-row"><span id="factory-label">Factory mode</span><button class="more factory-info" id="factory-info" type="button" aria-label="About Factory mode" aria-controls="factory-hint" aria-expanded="false" title="${esc(FACTORY_MEANING)}">ⓘ</button><button class="switch" id="launch-factory" type="button" role="switch" aria-labelledby="factory-label" aria-describedby="factory-meaning" aria-checked="false"></button></span></div>
         <p class="hint factory-hint" id="factory-hint" hidden><span id="factory-meaning">${esc(FACTORY_MEANING)}</span></p>
         <div class="plan-cards">${cards}</div>
       </section>
       <div class="pickers">
-          <div><label for="launch-model">LEAD MODEL</label><select id="launch-model" name="model"><option value="" selected>the plan's lead</option>${modelOptions}<option value="other">Other…</option></select><div class="other-model" id="other-model-row" hidden><label for="launch-other-model">Model name</label><input id="launch-other-model" type="text" autocomplete="off"></div><p class="hint detail" id="model-error" role="alert" hidden></p></div>
-          <div><label for="launch-cost">COST CEILING</label><input id="launch-cost" name="max_cost_usd" type="number" min="${START_BOUNDS.maxCostUsd.min}" max="${START_BOUNDS.maxCostUsd.max}" step="any" inputmode="decimal" placeholder="the plan's" aria-describedby="cost-hint"><p class="hint detail" id="cost-hint">List-price US dollars; the swarm ends at it.</p></div>
-          <div><label for="launch-worker-model">WORKERS MODEL</label><select id="launch-worker-model" name="worker_model"><option value="" selected>the plan's workers</option>${modelOptions}</select></div>
-          <div class="project-row" id="project-row"><label for="launch-project">PROJECT</label><select id="launch-project" name="project" aria-describedby="project-note">
+          <div><label for="launch-model">Lead model</label><select id="launch-model" name="model"><option value="" selected>the plan's lead</option>${modelOptions}<option value="other">Other…</option></select><div class="other-model" id="other-model-row" hidden><label for="launch-other-model">Model name</label><input id="launch-other-model" type="text" autocomplete="off"></div><p class="hint detail" id="model-error" role="alert" hidden></p></div>
+          <div><label for="launch-worker-model">Workers model</label><select id="launch-worker-model" name="worker_model"><option value="" selected>the plan's workers</option>${modelOptions}</select></div>
+          <div><label for="launch-cost">Cost ceiling</label><input id="launch-cost" name="max_cost_usd" type="number" min="${START_BOUNDS.maxCostUsd.min}" max="${START_BOUNDS.maxCostUsd.max}" step="any" inputmode="decimal" placeholder="the plan's" aria-describedby="cost-hint"><p class="hint detail" id="cost-hint">Defaults to the plan's ceiling, in US dollars at list price. The swarm stops when it reaches it.</p></div>
+          <div class="project-row" id="project-row"><label for="launch-project">Project</label><select id="launch-project" name="project" aria-describedby="project-note">
             <option value="" selected>No project · chat only</option>${options}${state.canCreateProject ? '<option value="new">New project…</option>' : ""}
           </select></div>
       </div>
@@ -974,7 +990,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
   const compact = `<div class="compact" id="launch-compact" data-nonce="${esc(nonce)}">
     <input id="compact-task" type="text" aria-label="Swarm task" placeholder="${esc(COMPACT_PLACEHOLDER)}">
     <button class="start" id="compact-start" type="button">Start</button>
-    <button class="more" id="compact-more" type="button" aria-expanded="false" aria-controls="launch-root">Options</button>
+    <button class="more" id="compact-more" type="button" aria-expanded="false" aria-controls="launch-root">Options<span class="chevron" aria-hidden="true">⌄</span></button>
   </div>`;
   return `<style>${designTokenCssBlock()}\n${PAGE_CSS}</style>
 <main id="launch-root" data-generation="${generation}">${state.hasSwarms ? compact : expanded}</main>
@@ -1024,7 +1040,6 @@ export function runAgainItem(s: SwarmSummary, launch: StartSwarmInput): Item[] {
     {
       type: "run-again",
       label: "Go deeper",
-      glyph: "›",
       hint: `Starts a ${next.name} with ${reuses}. Context is not refreshed.`,
       payload: { id: s.id, size: next.size, power: next.power },
     },

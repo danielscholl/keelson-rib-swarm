@@ -8,11 +8,22 @@
 
 import type { CanvasActionItem, CanvasBoardView, RibSurfaceBadge } from "@keelson/shared";
 import { estimated, rowCost, swarmCost } from "../cost.ts";
-import { freshTokens, modelLabel, tokenCount } from "../labels.ts";
+import { modelLabel } from "../labels.ts";
 import { NEED_ORDER, type Need, needsYou, oldestNeed, UNDATED } from "../needs.ts";
 import { type StartingSwarm, type SwarmSummary, sizeOf } from "../types.ts";
-import { dayHeading, firstLine, gist, hhmm, plural, shortHandle, span } from "./format.ts";
 import {
+  dayHeading,
+  firstLine,
+  gist,
+  hhmm,
+  plural,
+  shortHandle,
+  span,
+  taskHead,
+} from "./format.ts";
+import {
+  askGist,
+  askText,
   causeTitle,
   LIFECYCLE,
   livePill,
@@ -78,12 +89,16 @@ function reportAction(s: SwarmSummary) {
         {
           type: "open-report",
           label: "Report",
-          glyph: "◧",
           payload: { id: s.id },
           hint: s.report.title,
         },
       ]
     : [];
+}
+
+function quiet(action: CanvasActionItem): CanvasActionItem {
+  const { tone: _tone, ...rest } = action;
+  return action.type === "select-ask" ? rest : action;
 }
 
 function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
@@ -92,11 +107,31 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
     action.type === "swarm-open" ? { ...action, type: "select-swarm", glyph: "↓" } : action;
   const actions = [request.primary, ...request.more].map(local);
   if (!actions.some((a) => a.type === "select-swarm")) actions.push(selectSwarm(s));
+  if (need.kind === "question" && need.ask) {
+    const gist = askGist(need.ask.text, 320);
+    const whole = gist === askText(need.ask.text);
+    return {
+      title: `@${shortHandle(need.ask.handle, s.id)} asks · ${s.id}`,
+      pill: request.pill,
+      edge: request.pill.tone,
+      prose: true,
+      fields: [{ value: gist }, ...sinceClock(need)],
+      // The question is already on the card, so answering it is the lead action.
+      actions: [
+        ...actions
+          .filter((x) => x.type === "reply-ask")
+          .map((x) => ({ ...x, tone: "brand" as const })),
+        ...actions
+          .filter((x) => x.type !== "reply-ask" && !(whole && x.type === "select-ask"))
+          .map(quiet),
+      ],
+    };
+  }
   return {
     title: request.title,
     pill: request.pill,
     edge: request.pill.tone,
-    stacked: true,
+    prose: true,
     fields: [{ value: request.line }, ...sinceClock(need), ...(request.link ? [request.link] : [])],
     footnote: `${firstLine(s.task, 60)} · ${s.id}`,
     actions,
@@ -105,10 +140,10 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
 
 function runningCard(s: SwarmSummary, needs: readonly Need[], server?: ServerLine): Card {
   return {
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     pill: needs.length ? { label: "needs you", tone: "caution" } : livePill(s),
     bar: turnMeter(s),
-    stacked: true,
+    prose: true,
     fields: [{ value: stateLine(s, needs, server).text }, timeLeft(s), ...people(s)],
     footnote: setup(s, false),
     actions: [selectSwarm(s, "brand"), ...reportAction(s), stopAction(s)],
@@ -118,7 +153,7 @@ function runningCard(s: SwarmSummary, needs: readonly Need[], server?: ServerLin
 function startingCard(s: StartingSwarm): Card {
   const shape = { ...s, size: sizeOf(s.limits, s.sizeBase), agents: [] };
   return {
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     pill: { label: "starting", tone: "neutral" },
     fields: [{ value: "creating the channel and the lead" }],
     footnote: [
@@ -147,27 +182,27 @@ function outcomeOf(s: SwarmSummary): string {
   return said || firstLine(causeTitle(s, false).split(". ")[0]!, OUTCOME_CHARS);
 }
 
-// An ended swarm leads with the task it was for, then its outcome. A done row
-// carries a quiet check, so a chip marks only the swarms that did not finish.
+// A swarm with a report leads with the report's title; any other leads with
+// its task, then its outcome. A done row carries a quiet check, so a
+// chip marks only the swarms that did not finish.
 // The trailing text never shrinks on the host, so it carries only the short facts.
 export function endedRow(s: SwarmSummary): Row {
   const took = span(s.startedAt, s.endedAt);
   const verified = verifiedText(s);
+  const concluded = s.status === "done" && s.report;
   const tail = ` · ${outcomeOf(s)}`;
   const cost = swarmCost(s);
   return {
     ...(s.status === "done"
       ? { icon: "✓" }
       : { chip: { label: LIFECYCLE[s.status].label, tone: LIFECYCLE[s.status].tone } }),
-    text: `${s.rerunOf ? "↻ " : ""}${firstLine(s.task, Math.max(24, ENDED_TEXT - tail.length))}${tail}`,
+    text: `${s.rerunOf ? "↻ " : ""}${concluded ? outcomeOf(s) : `${taskHead(s.task, Math.max(24, ENDED_TEXT - tail.length))}${tail}`}`,
     trailing: [
-      plural(s.turnsUsed, "turn"),
       ...(took ? [took] : []),
-      ...(s.usage ? [tokenCount(freshTokens(s.usage))] : []),
       ...(cost ? [rowCost(cost, estimated(s))] : []),
       hhmm(s.endedAt ?? s.startedAt),
       ...(verified ? [verified] : []),
-      ...(s.report ? ["◧ report"] : []),
+      ...(s.report ? ["report"] : []),
     ].join(" · "),
     action: { type: "swarm-open", payload: { id: s.id } },
   };
@@ -257,7 +292,7 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
   const status =
     needing.length > 0
       ? {
-          label: `${needing.length} need${needing.length === 1 ? "s" : ""} you`,
+          label: `${needs.length} need${needs.length === 1 ? "s" : ""} you`,
           tone: "caution" as const,
         }
       : liveCount > 0
@@ -271,6 +306,8 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
           { label: "starting", n: state.starting.length, tone: "neutral" as const },
         ].filter((seg) => seg.n > 0)
       : [];
+  // One kind alone only repeats the status pill.
+  const mixed = segments.length > 1 ? segments : [];
   const empty = liveCount === 0 && ended.length === 0;
   const days = byDay(shown, now, ended);
   if (earlier > 0) {
@@ -284,7 +321,7 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
   return {
     view: "board",
     title: "Swarms",
-    ...(status ? { header: { status, ...(segments.length > 0 ? { segments } : {}) } } : {}),
+    ...(status ? { header: { status, ...(mixed.length > 0 ? { segments: mixed } : {}) } } : {}),
     sections: [
       ...(needs.length > 0
         ? [
@@ -302,7 +339,6 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
         ? [
             {
               kind: "actions" as const,
-              title: `Live · ${live.length}`,
               wrap: true,
               items: ordered.map((x) => ({
                 type: "select-swarm",
@@ -319,6 +355,7 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
         ? buildCockpit(expanded.s, expanded.needs, {
             server: state.server,
             titled: live.length < 2,
+            asksAbove: true,
             now,
             selectedAgentId: state.selectedAgents?.get(expanded.s.id),
           })

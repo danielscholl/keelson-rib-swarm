@@ -572,18 +572,19 @@ status and reason, and the summary is the run's last progress frame.
 
 The rib publishes a Swarms tab. Needs you is one list across every live swarm:
 one card per request, oldest first, with the oldest 12 shown when there are
-more. Each card leads with the request (Review the plan for …, @planner asked:
-…, Crew is at $32.00 of its $40.00 cost ceiling, ClickClack stopped answering,
+more. Each card leads with the request (Review the plan for …, @planner asks,
+with the question below it, Crew is at $32.00 of its $40.00 cost ceiling, ClickClack stopped answering,
 No agent has worked since …) and its verb (Review plan, Read question, Raise to
 $60.00, Open swarm, Message the lead). The task and swarm
-id sit in the footnote. Open swarm expands that live swarm on the page.
+id sit in the footnote; a question's title carries the swarm id instead, and
+its first button is Reply, since the question is already on the card; Read question appears only when the card shows part of it. Open swarm expands that live swarm on the page.
 
 The expanded live swarm is a cockpit on the page, not in the drawer. It runs:
 the task and id with a lifecycle or needs-you pill and the crew as faces; a
 state line only when something needs a look; once the lead has concluded, the
 Outcome card; peer-review gate cards; the shape block; Timeline | Map tabs;
 Conversation | Spend | Activity tabs; Produced so far; then Open the report when
-one exists, Timeline, Details, and Stop swarm last.
+one exists, Record, Details, and Stop swarm last.
 
 Each agent is a face in its identity tone with its initial, two letters where
 first letters collide (Le and La). Busy faces pulse, waiting faces carry an amber
@@ -596,9 +597,8 @@ the plan (Scout, Crew, Fleet), seats in use of the plan's agents, and the
 models, lead first, then workers grouped by model with a count. On the right,
 meters against their ceilings: Turns (with the forecast's reading after the
 count), Time (minutes left and when it ends), Fresh tokens when a token ceiling
-is set, and Cost when the host prices tokens, split by kind in the Usage page's
-order (cache read, input, cache write, output) with its spend rate and cache
-hit. A meter warns past ${SPEND_WARN_AT * 100}% of a ceiling or when the
+is set, and Cost when the host prices tokens, one fill with its spend rate and
+cache hit (the Spend tab splits it by kind). A meter warns past ${SPEND_WARN_AT * 100}% of a ceiling or when the
 forecast runs out before the clock.
 
 Each tab carries a count or total. A group with one non-empty tab shows its
@@ -608,14 +608,18 @@ Model column, since the shape block names the models.
 
 Timeline is a native section in the Timeline tab beside Map, on the live cockpit only,
 not the per-swarm drawer or ended board. It requires Keelson v0.125.0 or later.
-The operator's lane comes first, then agents in first-worked order, then runs.
+The operator's lane comes first once you have posted or answered, then agents in
+first-worked order, then runs.
 Turns use the agent's identity color, with hatching for timeouts or errors and
 open endpoints for unfinished work. Run bars use status colors.
 Marks show spawns (○), questions (?), operator posts and answers (▲), reports
-(▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
-Nudges, caps and retirements keep their existing marks.
+(■), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
+Nudges, caps and retirements keep their existing marks. The legend, here and on
+the record, lists only the marks that timeline draws.
 
-The live window starts at startedAt and its clock ends at startedAt + wallClockMs.
+The live window starts at startedAt and its clock runs 30 seconds past now, rounded
+up to 15 seconds and at least 2 minutes (half again past the elapsed time, at least
+30 minutes, for a factory swarm), and never past startedAt + wallClockMs.
 When endedAt is recorded, the window is fixed at that end with no live clock.
 The host uses a UTC axis and a shared 30-second clock without new frames.
 On narrow sections, lane lists replace the plot.
@@ -624,7 +628,7 @@ Timeline keeps at most 12 lanes, 400 spans and 200 marks. It keeps the operator,
 then first-worked agents, then runs; it retains the newest eligible spans and
 marks with stable timestamp sorts. Items on omitted lanes are removed.
 The title names shown/total counts for each clipped dimension, including items
-lost with omitted lanes. Timeline opens the record with additional lanes and events.
+lost with omitted lanes. Record opens the record with additional lanes and events.
 The record keeps the full retained timeline, with its own snapshot window and
 drawing. Native clipping does not remove its lanes or events.
 
@@ -662,9 +666,10 @@ actually served model/provider. Missing evidence says not reported or not record
 never the requested model as served. Provenance names the parent and join time.
 Writers show worktree, branch, draft PR and observed CI, with an Open PR link.
 
-Said is this agent's recent messages only, newest first, each linked to its
-thread. Turns keeps its recorded spans newest first. The quiet Its messages ·
-transcript ↗ link opens the channel, not a complete agent-only message history.
+Said is this agent's recent messages only, newest first, each opening to its
+full text. Turns keeps its recorded spans newest first with HH:MM:SS times, the
+swarm's date in its heading. The quiet Transcript ↗
+link opens the channel, not a complete agent-only message history.
 Message @agent posts as you with the roster's full handle mentioned, through
 the unchanged router. It wakes the selected agent and spends a turn; additional
 mentions in your note follow normal routing. The activity names the recipient.
@@ -761,9 +766,9 @@ It retains the numeric used count and existing sparkline.
 
 Conversation shows the eight newest channel messages, newest first. Each row
 carries its author's short handle in an identity-colored chip (you for the
-operator), ↳ on a reply, its HH:MM time, and a link to its thread. A final count
-line links the transcript. The rib keeps only the newest 20 messages and their
-first 200 characters; the row shows the first line, at most 90 characters, as
+operator), ↳ on a reply, and its HH:MM:SS time. Rows are plain text, without leading @addresses, message ids or the author's own "name:" label, cut at a word; the final
+count line links the transcript. The rib keeps only the newest 20 messages and their
+first 200 characters; the row shows the first line, at most 120 characters, as
 plain field text. Emphasis and code marks come off; HTML and markdown links stay
 literal. The status tools and the durable op record leave this recent-message
 buffer out, while messageCount counts every ingested message.
@@ -789,7 +794,8 @@ those clauses. Socket drops, channel faults, a failed lead turn and idle nudges
 append health warnings. Times are HH:MM so the line stays true between frames.
 The cockpit's state line leaves out busy and waiting agents, which its faces
 show, and the newest-activity fallback, so it appears only for requests, gates,
-the conclusion, stopping and health warnings. Folded cards keep the full line.
+the conclusion, stopping and health warnings. On the tab it also drops while the
+swarm has requests, since Needs you above names them. Folded cards keep the full line.
 
 With two or more live swarms a selection strip picks the expanded one. The
 choice is shared by every viewer. The pinned canvas contract does not allow
@@ -801,11 +807,11 @@ turn-budget meter; starting swarms stay cards there.
 
 Ended swarms are rows grouped under the day they ended (Today, Yesterday, then
 the weekday and date), the newest eight on the tab and every one in the history
-drawer. A row leads with the task, then · and what came of the swarm: the
-report's title, the conclusion's first sentence, or why it ended (Stopped by
+drawer. A row with a report leads with the report's title; any other leads with
+the task, then · and what came of the swarm: the conclusion's first sentence, or why it ended (Stopped by
 you, Out of turns at 40). A done row carries a check and the rest a lifecycle
-chip; ↻ marks a rerun. The trailing names turns, time, the clock when it ended,
-how many runs verified, and ◧ report.
+chip; ↻ marks a rerun. The trailing names how long it ran, cost, the clock when it ended,
+how many runs verified, and report.
 
 Requests come in a ladder: decide (a run waits at an approval only the operator
 can answer, because the host refused the workflow under \`ribApprovalGrants\`
@@ -823,9 +829,9 @@ An ended row opens its board in the drawer. The per-swarm board also still
 composes for MCP clients, live or ended. Live, it runs: the requests, the outcome once a
 report exists, a budget strip (turns with the same forecast delta, time, agents, fresh
 tokens with cached beside them), the same full-width Map, then Conversation
-and the eligible Message the lead composer, Timeline, Details and Stop,
+and the eligible Message the lead composer, Record, Details and Stop,
 then Spend, Produced so far and Activity. Ended, it reads like the live card: the Outcome; the shape block, with the
-crew as faces in its plan card and the meters stopped where the swarm ended;
+agent count in its plan card and the meters stopped where the swarm ended;
 Result when the swarm opened pull requests, merged work or ran workflows (Pull
 requests when eligible, Merged for a local write swarm, then Runs verified only
 when runs exist); the actions; then Agents, Spend, Produced, Activity and About
@@ -845,7 +851,7 @@ It counts distinct URLs across runs and writers, with "M with CI passing".
 A URL counts as passing only when every recorded owner explicitly reports pass.
 Run CI must also identify the same PR URL. Run verification is not a substitute
 for CI. Live boards omit the Pull requests tile.
-The actions strip is Retry or Go deeper, Timeline, Details.
+The actions strip is Retry or Go deeper, Record, Details.
 Retry and Go deeper are omitted when retained launch inputs are unavailable.
 The outcome is one card: under the report's title when the lead published one
 (else Conclusion), the conclusion with a copy button, and Open the report when
@@ -862,21 +868,20 @@ monospace/stacked cards or ghost seats. Spend shows on live boards, cockpits and
 once an agent has spent: a table of each agent's model and provider, ↑ in, ↓ out,
 cached tokens, cache hit, cost and share, a swarm row, then Cost by kind.
 The cockpit and ended board leave out the model column, which the shape block
-names. The record keeps Spend by agent, with fresh and cached tokens apart. Both lifecycles retain the produced inventory when applicable:
+names. The record keeps Tokens by agent, with fresh and cached tokens apart. Both lifecycles retain the produced inventory when applicable:
 Produced so far while live, Produced once ended.
 Ended Activity shows at most the newest 12 events, with actor, time and repeats,
 and no Read the full log row. Only live Activity adds Read the full log when
 earlier events exist; it opens the record's latest 200 retained events, not the
-reading pane. Timeline reaches Activity as well as the timeline and spend.
+reading pane. Record reaches Activity as well as the timeline and spend.
 Only ended boards keep About: the task, times, health and one transcript link. About
 leaves out the cause the Outcome card already shows; Details keeps it.
 The transcript link is omitted when its address is unavailable.
 The back-link to Ended swarms is a separate row outside About.
 Each activity row carries its actor as a face in the
 agent's color, or you for the operator, and a turn is one row written when it
-ends, with its outcome, how long it took and what woke it. Each bench card's
-footnote names the agent's last event, and the Turns meter stops where the swarm
-ended. A note posted with Message the lead shows in the activity at
+ends, with its outcome, how long it took and what woke it. The Turns meter
+stops where the swarm ended. A note posted with Message the lead shows in the activity at
 once.
 
 Produced so far (Produced once ended) is one shared inventory in the cockpit and per-swarm board.
@@ -903,12 +908,12 @@ placeholders use past tense. An empty chat-only swarm without workflows omits
 the section; a published report still appears. Only the operator merges pull
 requests, and the board never removes worktrees. Engine cleanup policy is unchanged.
 
-Timeline shows the swarm's record, a page the rib draws: a timeline with
+Record shows the swarm's record, a page the rib draws: a timeline with
 a lane per agent (turns as bars in the agent's color, hatched when a turn timed
-out or failed), the operator's lane above and a lane per run below, with marks
+out or failed), the operator's lane above when you posted or answered and a lane per run below, with marks
 for spawns, questions to the operator, operator posts, the report, the
 conclusion, gates opened and answered, and verification; a graph of who woke
-whom; spend by agent with fresh and cached tokens apart; each run in full;
+whom; tokens by agent with fresh and cached tokens apart; each run in full;
 Activity; and the evidence the agents were given. Activity shows the latest
 200 retained entries, newest first, with actor, date/time, event and repeat
 count. The operator reads as you, absent actors as rib, and unknown actors stay
@@ -916,7 +921,9 @@ identified. Retained events are not a complete transcript. It has no buttons; th
 verb. A live record redraws when the swarm's course changes, at most every five
 seconds.
 The record shares timeline lanes, spans, marks and their titles with the cockpit,
-not its deadline window or native rendering. Older swarms without recorded turns
+not its deadline window or native rendering. The cockpit titles a turn bar only
+turn N (and timeout or error), since the host prints a span's title inside it;
+the record keeps the full title on hover. Older swarms without recorded turns
 show their events and runs without turn bars.
 
 Read the draft opens the reading pane with the lead's refused draft and the full
@@ -940,13 +947,13 @@ access or workflows.
 
 Size offers three plans. Scout is selected by default.
 Each card shows its agents, cost ceiling, minutes and the effective provider's models,
-and, once that plan has run here, its median and highest cost and how many runs.
+and, once that plan has run here, its median and highest cost and how many runs; a plan without runs says so once any plan has them.
 Beside the figures, every card lists a Lead row and a Workers row, even when
 they name the same model. Providers without pins use the matching class model.
 
 | Plan | For | Agents | Turns | Minutes |
 | --- | --- | --- | --- | --- |
-| Scout | A narrow question, or a first pass before a bigger run. | ${SIZE_PRESETS.small.maxAgents} | ${SIZE_PRESETS.small.maxTurns} | ${minutes(SIZE_PRESETS.small.wallClockMs)} |
+| Scout | A narrow question, or a first pass. | ${SIZE_PRESETS.small.maxAgents} | ${SIZE_PRESETS.small.maxTurns} | ${minutes(SIZE_PRESETS.small.wallClockMs)} |
 | Crew | Most tasks: investigate, debate, and decide. | ${SIZE_PRESETS.medium.maxAgents} | ${SIZE_PRESETS.medium.maxTurns} | ${minutes(SIZE_PRESETS.medium.wallClockMs)} |
 | Fleet | Wide or hard problems that are worth the spend. | ${SIZE_PRESETS.large.maxAgents} | ${SIZE_PRESETS.large.maxTurns} | ${minutes(SIZE_PRESETS.large.wallClockMs)} |
 
@@ -1032,7 +1039,7 @@ The switch and initialization create no grants. The rib never runs \`bd init\`
 itself; the host-owned beads tool initializes and refreshes the tracker.
 Existing-project starts, Retry and Go deeper do not initialize a tracker.
 
-With no project selected, the ALSO ALLOW group is absent. Selecting an existing project
+With no project selected, the Also allow group is absent. Selecting an existing project
 reveals Write, Run workflows and Use the tracker, all off. Write permits changes;
 only writers spawned by the lead receive their own worktrees and branches.
 Run workflows shows removable workflow chips: Enter or comma adds names,

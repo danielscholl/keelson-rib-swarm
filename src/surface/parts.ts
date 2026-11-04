@@ -11,8 +11,8 @@ import type { CanvasActionItem, CanvasBoardView } from "@keelson/shared";
 import {
   byModel,
   cents,
+  costCents,
   costOf,
-  costText,
   raisedCeiling,
   spendProgress,
   spendRate,
@@ -176,7 +176,7 @@ function usageRows(s: SwarmSummary): Row[] {
       ...(m.cacheWrite !== undefined ? [`${tokenCount(write)} write`] : []),
       `${tokenCount(m.output)} out`,
       `${tokenCount(m.cached)} read`,
-      ...(cost ? [costText(cost)] : []),
+      ...(cost ? [costCents(cost)] : []),
     ].join(" · ");
   });
   const total = swarmCost(s);
@@ -188,7 +188,7 @@ function usageRows(s: SwarmSummary): Row[] {
       text: [
         `swarm · ${tokenCount(freshTokens(s.usage))} fresh${maxTokens !== undefined ? ` of ${tokenCount(maxTokens)}` : ""}`,
         ...(total
-          ? [`${costText(total)}${maxCost !== undefined ? ` of ${cents(maxCost)}` : ""}`]
+          ? [`${costCents(total)}${maxCost !== undefined ? ` of ${cents(maxCost)}` : ""}`]
           : []),
       ].join(" · "),
     },
@@ -227,7 +227,8 @@ export function healthRows(s: SwarmSummary, opts: { omitCause?: boolean } = {}):
 
 // The question without the @operator that addressed it.
 export function askText(body: string): string {
-  return body.replace(/(^|\s)@operator\b[,:]?\s*/gi, "$1").trim();
+  const text = body.replace(/(^|\s)@operator\b[,:]?\s*/gi, "$1").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 // The question in one plain line: the first line that asks something, else the first line.
@@ -491,7 +492,6 @@ export function requestOf(s: SwarmSummary, need: Need, server?: ServerLine): Req
         type: "select-ask",
         label: "Read question",
         tone: "brand",
-        glyph: "▤",
         payload: { id: s.id, messageId: ask.messageId },
       },
       more: [

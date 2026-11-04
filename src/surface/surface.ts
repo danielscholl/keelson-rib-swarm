@@ -87,6 +87,8 @@ export interface SwarmsSurface {
   selectAsk(id: string, messageId: string): Promise<void>;
   selectGate(id: string, runId: string, identity: string): Promise<void>;
   openDetails(id: string): Promise<void>;
+  // Recomposes the record before it opens, so it carries prices the host could not give at boot.
+  openRecord(id: string): Promise<void>;
   changed(id: string, kind: SwarmChange): void;
   // Recompose the index and history, for a change no swarm reports: the server
   // row, or history cleared by a reset.
@@ -544,6 +546,10 @@ export function createSwarmsSurface(deps: SurfaceDeps): SwarmsSurface {
         );
         return buildGateInspector(summary, current ?? selected);
       });
+    },
+    async openRecord(id) {
+      track([id]);
+      await records.get(id)?.flush();
     },
     async openDetails(id) {
       assertAvailable();
