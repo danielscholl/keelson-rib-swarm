@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.0](https://github.com/danielscholl/keelson-rib-swarm/compare/v0.30.1...v0.31.0) (2026-11-04)
+
+
+### Added
+
+* **swarms:** UI polish overhaul ([#156](https://github.com/danielscholl/keelson-rib-swarm/issues/156)) ([84f9175](https://github.com/danielscholl/keelson-rib-swarm/commit/84f917565e8da27d2f53b72716912c6e6d3f3c40))
+
 ## [0.30.1](https://github.com/danielscholl/keelson-rib-swarm/compare/v0.30.0...v0.30.1) (2026-10-23)
 
 
