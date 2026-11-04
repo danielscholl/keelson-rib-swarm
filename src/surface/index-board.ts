@@ -11,7 +11,16 @@ import { estimated, rowCost, swarmCost } from "../cost.ts";
 import { modelLabel } from "../labels.ts";
 import { NEED_ORDER, type Need, needsYou, oldestNeed, UNDATED } from "../needs.ts";
 import { type StartingSwarm, type SwarmSummary, sizeOf } from "../types.ts";
-import { dayHeading, firstLine, gist, hhmm, plural, shortHandle, span } from "./format.ts";
+import {
+  dayHeading,
+  firstLine,
+  gist,
+  hhmm,
+  plural,
+  shortHandle,
+  span,
+  taskHead,
+} from "./format.ts";
 import {
   askGist,
   causeTitle,
@@ -116,7 +125,7 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
 
 function runningCard(s: SwarmSummary, needs: readonly Need[], server?: ServerLine): Card {
   return {
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     pill: needs.length ? { label: "needs you", tone: "caution" } : livePill(s),
     bar: turnMeter(s),
     prose: true,
@@ -129,7 +138,7 @@ function runningCard(s: SwarmSummary, needs: readonly Need[], server?: ServerLin
 function startingCard(s: StartingSwarm): Card {
   const shape = { ...s, size: sizeOf(s.limits, s.sizeBase), agents: [] };
   return {
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     pill: { label: "starting", tone: "neutral" },
     fields: [{ value: "creating the channel and the lead" }],
     footnote: [
@@ -172,7 +181,7 @@ export function endedRow(s: SwarmSummary): Row {
     ...(s.status === "done"
       ? { icon: "✓" }
       : { chip: { label: LIFECYCLE[s.status].label, tone: LIFECYCLE[s.status].tone } }),
-    text: `${s.rerunOf ? "↻ " : ""}${concluded ? outcomeOf(s) : `${firstLine(s.task, Math.max(24, ENDED_TEXT - tail.length))}${tail}`}`,
+    text: `${s.rerunOf ? "↻ " : ""}${concluded ? outcomeOf(s) : `${taskHead(s.task, Math.max(24, ENDED_TEXT - tail.length))}${tail}`}`,
     trailing: [
       ...(took ? [took] : []),
       ...(cost ? [rowCost(cost, estimated(s))] : []),

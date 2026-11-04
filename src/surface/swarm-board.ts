@@ -58,6 +58,7 @@ import {
   shortHandle,
   shortRun,
   span,
+  taskHead,
   threadHref,
 } from "./format.ts";
 import { runAgainItem } from "./launch-board.ts";
@@ -1464,7 +1465,7 @@ export function buildCockpit(
       ...(opts.titled ? { title: "Live" } : {}),
       items: [
         {
-          title: `${firstLine(s.task)} · ${s.id}`,
+          title: `${taskHead(s.task)} · ${s.id}`,
           pill: needs.length ? { label: "needs you", tone: "caution" } : livePill(s),
           ...(needs.length ? { edge: "caution" as const } : {}),
           ...(people.length ? { fields: [{ people }] } : {}),
@@ -1582,7 +1583,7 @@ export function buildSwarmBoard(s: SwarmSummary, opts: BoardOptions = {}): Canva
   const details = liveDetails(s, opts.selectedAgentId);
   return {
     view: "board",
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     header: {
       status: pill,
       ...(chip ? { chip } : {}),
@@ -1608,7 +1609,7 @@ export function buildStartingBoard(s: StartingSwarm): CanvasBoardView {
   const shape = { ...s, size: sizeOf(s.limits, s.sizeBase), agents: [] };
   return {
     view: "board",
-    title: `${firstLine(s.task)} · ${s.id}`,
+    title: `${taskHead(s.task)} · ${s.id}`,
     header: { status: { label: "starting", tone: "neutral" } },
     sections: [
       {

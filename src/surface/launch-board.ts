@@ -510,6 +510,13 @@ const PAGE_SCRIPT = `
       document.getElementById("chip-" + card.dataset.size).hidden = !selected;
       showModels(card, selected ? model : "", selected ? worker : "");
     });
+    const planCells = document.getElementById("models-" + size);
+    if (planCells) {
+      modelSelect.options[0].textContent = planCells.dataset.lead + " · plan";
+      workerSelect.options[0].textContent = planCells.dataset.worker + " · plan";
+    }
+    const planBudget = (factory ? factoryBudgets : budgets)[size];
+    document.getElementById("launch-cost").placeholder = planBudget.slice(planBudget.lastIndexOf("$")).split(/[s·]/)[0] + " · plan";
     document.getElementById("launch-summary").textContent = summary();
     document.getElementById("launch-models").textContent = model && worker
       ? (model === worker ? " on " + model : " on " + model + " and " + worker)

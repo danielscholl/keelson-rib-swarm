@@ -65,6 +65,13 @@ export function firstLine(text: string, max = 72): string {
   return line.length > max ? `${line.slice(0, max - 1).trimEnd()}…` : line;
 }
 
+// A task's first sentence, so titles end on a whole thought.
+export function taskHead(task: string, max = 72): string {
+  const line = firstLine(task, 1000);
+  const end = line.search(/[.?!]\s/);
+  return firstLine(end >= 16 ? line.slice(0, end + 1) : line, max);
+}
+
 // Inside a swarm's own views the id is already named, so handles drop it.
 export function shortHandle(handle: string, swarmId: string): string {
   return handle.startsWith(`${swarmId}-`) ? handle.slice(swarmId.length + 1) : handle;

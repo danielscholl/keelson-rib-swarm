@@ -184,7 +184,7 @@ svg .count { font-size: 10.5px; fill: var(--muted);
 .who i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 7px; }
 .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--card-2); }
 .bar i { display: block; height: 100%; }
-.bar .fresh { background: var(--accent); } .bar .cached { background: var(--accent); opacity: .35; }
+.bar .fresh { background: currentColor; } .bar .cached { background: currentColor; opacity: .35; }
 .run { border: 1px solid var(--border); border-radius: 10px; background: var(--card-2); padding: 12px 14px; margin: 0 0 10px; }
 .run dl { display: grid; grid-template-columns: 88px 1fr; gap: 2px 10px; margin: 6px 0 0; font-size: 12.5px; }
 .run dt { color: var(--muted); } .run dd { margin: 0; overflow-wrap: anywhere; }
@@ -719,7 +719,7 @@ function spend(s: SwarmSummary): string {
   const items = rows.map((a) => {
     const u = a.usage as NonNullable<Agent["usage"]>;
     const fresh = freshTokens(u);
-    return `<span class="who"><i class="c-${TONE_CLASS[a.tone] ?? "neu"}"></i>@${esc(cut(shortHandle(a.handle, s.id), 14))}</span><span class="bar"><i class="fresh" style="width:${num((100 * fresh) / most)}%"></i><i class="cached" style="width:${num((100 * u.cached) / most)}%"></i></span><span class="mono">${tokenCount(fresh)} fresh · ${tokenCount(u.cached)} cached${spendCost(agentCost(a))}</span>`;
+    return `<span class="who"><i class="c-${TONE_CLASS[a.tone] ?? "neu"}"></i>@${esc(cut(shortHandle(a.handle, s.id), 14))}</span><span class="bar c-${TONE_CLASS[a.tone] ?? "neu"}"><i class="fresh" style="width:${num((100 * fresh) / most)}%"></i><i class="cached" style="width:${num((100 * u.cached) / most)}%"></i></span><span class="mono">${tokenCount(fresh)} fresh · ${tokenCount(u.cached)} cached${spendCost(agentCost(a))}</span>`;
   });
   return `<section><h2>Tokens by agent</h2><div class="spend">${items.join("")}</div><p class="note">Bar length is fresh tokens plus cached tokens, the cached part lighter; cost is on the right.</p></section>`;
 }
