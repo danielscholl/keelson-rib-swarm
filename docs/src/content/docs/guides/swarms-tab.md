@@ -51,7 +51,7 @@ One live swarm expands on the page as a cockpit. It runs in this order:
 5. **Timeline | Map** tabs.
 6. **Conversation | Spend | Activity** tabs.
 7. **Produced so far**.
-8. **Open the report** when one exists; **Timeline**; **Details**; and
+8. **Open the report** when one exists; **Record**; **Details**; and
    **Stop swarm…** last.
 
 Each agent is a face in its identity tone with its initial, two letters where
@@ -84,7 +84,7 @@ first-worked order, then runs.
 Turns use the agent's identity color, with hatching for timeouts or errors and
 open endpoints for unfinished work. Run bars use status colors.
 Marks show spawns (○), questions (?), operator posts and answers (▲), reports
-(▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
+(■), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
 Nudges, caps and retirements keep their existing marks. The legend, here and on
 the record, lists only the marks that timeline draws.
 
@@ -100,7 +100,7 @@ Timeline keeps at most **12 lanes, 400 spans and 200 marks**. It keeps the opera
 then first-worked agents, then runs; it retains the newest eligible spans and
 marks with stable timestamp sorts. Items on omitted lanes are removed.
 The title names shown/total counts for each clipped dimension, including items
-lost with omitted lanes. **Timeline** opens the record with additional lanes and events.
+lost with omitted lanes. **Record** opens the record with additional lanes and events.
 The record keeps the full retained timeline, with its own snapshot window and
 drawing. Native clipping does not remove its lanes or events.
 
@@ -152,9 +152,9 @@ draft PR and observed CI, with an **Open PR** link.
 **Said** is this agent's recent messages only, newest first, each opening to
 its full text. **Turns** shows its newest 40 recorded spans first, with
 HH:MM:SS times and the swarm's date in its heading, and names the
-total when older turns are hidden. **Timeline** opens the record with every recorded
+total when older turns are hidden. **Record** opens the record with every recorded
 turn on the timeline. The quiet
-**its messages · transcript ↗** link opens the channel, not a complete
+**Transcript ↗** link opens the channel, not a complete
 agent-only message history.
 
 **Message @agent** posts as you with the roster's full handle mentioned,
@@ -417,7 +417,7 @@ Live, the board runs in this order:
 - the same full-width **Map**, then **Conversation**, with the newest eight
   messages and transcript link as the cockpit, followed by the eligible
   **Message the lead** composer
-- **Timeline**, **Details** and **Stop swarm…** at the far end of the row.
+- **Record**, **Details** and **Stop swarm…** at the far end of the row.
   The **Message the lead** form under Conversation posts in the channel as
   you and wakes the lead. Its placeholder reads **posts as you, wakes the
   lead**. The button reads **Sending…** until the note is posted, the toast
@@ -425,7 +425,7 @@ Live, the board runs in this order:
   **you posted in #swarm-<id>: …**
 
 Ended, the board reads like the live card. In order: the **Outcome**; the
-shape block, with the crew as faces in its plan card and the meters stopped
+shape block, with the agent count in its plan card and the meters stopped
 where the swarm ended; **Result** when the swarm opened pull requests, merged
 work or ran workflows (Pull requests when eligible, Merged for a local write
 swarm, then Runs verified only when runs exist); the actions; then **Agents**,
@@ -450,7 +450,7 @@ A URL counts as passing only when every recorded owner explicitly reports
 pass. Run CI must also identify the same PR URL. A verified run is not a
 substitute for CI evidence. Live boards omit the Pull requests tile.
 
-The actions strip is Retry or Go deeper, Timeline, Details.
+The actions strip is Retry or Go deeper, Record, Details.
 Retry and Go deeper are omitted when retained launch inputs are unavailable.
 
 The outcome is one card. When the lead published a report, the card carries
@@ -490,7 +490,7 @@ the lifecycle:
   to Ended swarms is a separate row outside About. The transcript link is
   omitted when its address is unavailable.
 
-Timeline reaches Activity as well as the timeline and spend.
+Record reaches Activity as well as the timeline and spend.
 
 Task and context disclosures live in Details, not on the cockpit or
 per-swarm board. Setup and live health evidence also live in Details.
@@ -562,14 +562,14 @@ board preview.
 
 ## A swarm's record
 
-**Timeline** shows the swarm's record, a page the rib draws, live or ended. It
+**Record** shows the swarm's record, a page the rib draws, live or ended. It
 answers what happened, in what order, by whom, and at what cost:
 
 - **Timeline**: a lane per agent in the order they first worked, yours above
   when you posted or answered, and one per run below. Each turn is a bar in the agent's color, from its
   start to its end, hatched when it timed out or failed and dashed while it
   runs. Marks show when an agent was spawned (○), asked you something (?), when
-  you posted or answered (▲), the report (▪), the conclusion (●), a run's gate
+  you posted or answered (▲), the report (■), the conclusion (●), a run's gate
   opening and being answered (◇ ◆), and a verified run (✓); hover any bar or
   mark for its detail. Live, a rule marks now and the axis runs a little past it,
   growing as the swarm runs; ended, the axis stops at the last event, counted

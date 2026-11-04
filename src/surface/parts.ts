@@ -227,7 +227,8 @@ export function healthRows(s: SwarmSummary, opts: { omitCause?: boolean } = {}):
 
 // The question without the @operator that addressed it.
 export function askText(body: string): string {
-  return body.replace(/(^|\s)@operator\b[,:]?\s*/gi, "$1").trim();
+  const text = body.replace(/(^|\s)@operator\b[,:]?\s*/gi, "$1").trim();
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 // The question in one plain line: the first line that asks something, else the first line.

@@ -432,15 +432,13 @@ function modelLines(s: SwarmSummary): { label: string; value: string }[] {
   ];
 }
 
-// An ended board has no head card, so its crew rides in the shape card.
-function shapeCard(s: SwarmSummary, crew: boolean): Card {
+function shapeCard(s: SwarmSummary): Card {
   const seats = live(s) ? `${s.agents.length} of ${s.limits.maxAgents}` : String(s.agents.length);
-  const people = crew ? crewPeople(s) : [];
   return {
     title: sizeWord(s),
     prose: true,
     fields: [
-      ...(people.length > 0 ? [{ people }] : [{ label: "Agents", value: seats }]),
+      { label: "Agents", value: seats },
       ...modelLines(s).map(({ label, value }) => ({
         label: label === "lead" ? "Lead" : "Workers",
         value,
@@ -536,15 +534,11 @@ function costBar(s: SwarmSummary, now: Date): Bar[] {
 }
 
 // What the swarm is beside how far it has run, so a swarm started by an agent explains itself.
-export function shapeBlock(
-  s: SwarmSummary,
-  now = new Date(),
-  opts: { crew?: boolean } = {},
-): Section {
+export function shapeBlock(s: SwarmSummary, now = new Date()): Section {
   return {
     kind: "columns",
     columns: [
-      { weight: 5, sections: [{ kind: "cards", items: [shapeCard(s, opts.crew === true)] }] },
+      { weight: 5, sections: [{ kind: "cards", items: [shapeCard(s)] }] },
       {
         weight: 7,
         sections: [
@@ -562,7 +556,7 @@ export function shapeBlock(
 
 export const openRecord = (s: SwarmSummary) => ({
   type: "open-record",
-  label: "Timeline",
+  label: "Record",
   hint: "The swarm's timeline, who woke whom, spend, runs, evidence and Activity.",
   payload: { id: s.id },
 });
@@ -582,6 +576,12 @@ function controls(s: SwarmSummary): Leaf[] {
 }
 
 // ---- Ended agents and the live map. ----
+
+// The lead's role opens with its own title, which the card already shows.
+function roleLine(role: string): string {
+  const line = firstLine(role.replace(/^lead:\s*/i, ""), 64);
+  return line.charAt(0).toUpperCase() + line.slice(1);
+}
 
 function agentCard(
   s: SwarmSummary,
@@ -615,7 +615,7 @@ function agentCard(
       : {}),
     prose: true,
     fields: [
-      { value: firstLine(a.role, 64) },
+      { value: roleLine(a.role) },
       ...(!metered
         ? [{ value: tokens ? `${turns} · ${tokens}` : turns }]
         : tokens
@@ -1526,7 +1526,7 @@ function endedSections(s: SwarmSummary, now: Date, opts: BoardOptions): Section[
   const aboutLeaf = about(s);
   return [
     ...outcome(s),
-    shapeBlock(s, now, { crew: true }),
+    shapeBlock(s, now),
     ...resultExtras(s),
     ...verbs(s, opts.launch),
     ...tabbed([

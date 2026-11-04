@@ -1763,7 +1763,7 @@ describe("the agent inspector", () => {
       ],
     });
     expect(view.sections.at(-2)).toMatchObject({
-      items: [{ text: "Its messages · transcript ↗", href: channelHref(s) }],
+      items: [{ text: "Transcript ↗", href: channelHref(s) }],
     });
     expect(view.sections.at(-1)).toMatchObject({
       items: [{ text: "Swarm s1", action: { type: "swarm-open", payload: { id: "s1" } } }],
@@ -1836,7 +1836,7 @@ describe("the agent inspector", () => {
         items: [
           {
             type: "open-record",
-            label: "Timeline",
+            label: "Record",
             hint: "All recorded turns are on the record's timeline.",
             payload: { id: s.id },
           },
@@ -3215,7 +3215,7 @@ describe("Swarms boards", () => {
     expect(cards).toHaveLength(2);
     const question = cards[0];
     expect(question?.title).toBe(`@w1 asks · ${fixtures.asked!.id}`);
-    expect(question?.fields?.[0]?.value).toBe("which retry cap, 30 s or 60 s?");
+    expect(question?.fields?.[0]?.value).toBe("Which retry cap, 30 s or 60 s?");
     expect(question?.pill).toEqual({ label: "question", tone: "caution" });
     expect(question?.fields?.some((field) => field.href)).toBe(false);
     expect(JSON.stringify(question)).not.toContain("in ClickClack");
@@ -3730,7 +3730,7 @@ describe("Swarms boards", () => {
     expect(items[0]).toMatchObject({ label: "Message the lead", expanded: true });
     expect(items[0]?.fields?.[0]?.placeholder).toBe("posts as you, wakes the lead");
     expect(actions[1]?.items[0]).toMatchObject({
-      label: "Timeline",
+      label: "Record",
       payload: { id: "s9hjy" },
     });
     expect(actions[1]?.items[1]).toMatchObject({
@@ -4129,9 +4129,10 @@ describe("ended board contract", () => {
       trailing: `${s.turnsUsed} / ${s.limits.maxTurns}`,
     });
     const card = shape.columns[0]?.sections[0];
-    expect(
-      card?.kind === "cards" ? card.items[0]?.fields?.[0]?.people?.map((p) => p.status) : [],
-    ).toEqual(s.agents.map(() => undefined));
+    expect(card?.kind === "cards" ? card.items[0]?.fields?.[0] : undefined).toEqual({
+      label: "Agents",
+      value: String(s.agents.length),
+    });
     const result = view.sections.find((section) => section.kind === "stats");
     if (extras && result?.kind !== "stats") throw new Error("missing Result");
     const pr =
@@ -4152,7 +4153,7 @@ describe("ended board contract", () => {
     if (verbs?.kind !== "actions") throw new Error("missing actions");
     expect(verbs.items.map((action) => action.label)).toEqual([
       s.status === "done" ? "Go deeper" : "Retry",
-      "Timeline",
+      "Record",
       "Details",
     ]);
     const bench = tabs.tabs[0]?.sections[0];
@@ -4238,7 +4239,7 @@ describe("ended board contract", () => {
     board(swarmKey(s.id), view);
     const verbs = view.sections.find((section) => section.kind === "actions");
     expect(verbs?.kind === "actions" ? verbs.items.map((action) => action.label) : []).toEqual([
-      "Timeline",
+      "Record",
       "Details",
     ]);
     expect(JSON.stringify(view)).not.toContain("transcript ↗");
@@ -5056,7 +5057,7 @@ describe("publishing", () => {
       unblock();
       sm.gate = undefined;
       await Promise.all(pending);
-      expect(JSON.stringify(sm.frames.get(askKey("s1"))?.at(-1))).toContain("second question?");
+      expect(JSON.stringify(sm.frames.get(askKey("s1"))?.at(-1))).toContain("Second question?");
       expect(JSON.stringify(sm.frames.get(gateKey("s1"))?.at(-1))).toContain("second gate");
       expect(sm.frames.get(agentKey("s1"))?.at(-1)).toMatchObject({ title: "@w1" });
       await Bun.sleep(10);
@@ -5137,7 +5138,7 @@ describe("publishing", () => {
         expect(JSON.stringify(frame)).not.toContain('"kind":"actions"');
         expect(JSON.stringify(frame)).not.toContain('"clock"');
       }
-      expect(JSON.stringify(sm.frames.get(askKey("s1"))?.at(-1))).toContain("first question?");
+      expect(JSON.stringify(sm.frames.get(askKey("s1"))?.at(-1))).toContain("First question?");
       expect(JSON.stringify(sm.frames.get(gateKey("s1"))?.at(-1))).toContain("first gate");
       expect(JSON.stringify(sm.frames.get(gateKey("s1"))?.at(-1))).not.toContain("new pause");
       summaries.delete("s1");
@@ -8884,7 +8885,7 @@ describe("launching from the tab", () => {
       .replace(/<template\b[^>]*>[\s\S]*?<\/template>/g, "")
       .replace(/<(style|script)>[\s\S]*?<\/\1>/g, "");
     for (const copy of [
-      ">Options</button>",
+      '>Options<span class="chevron" aria-hidden="true">⌄</span></button>',
       ">Start</button>",
       `type="text" aria-label="Swarm task" placeholder="${COMPACT_PLACEHOLDER}"`,
     ]) {

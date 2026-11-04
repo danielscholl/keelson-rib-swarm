@@ -584,7 +584,7 @@ the task and id with a lifecycle or needs-you pill and the crew as faces; a
 state line only when something needs a look; once the lead has concluded, the
 Outcome card; peer-review gate cards; the shape block; Timeline | Map tabs;
 Conversation | Spend | Activity tabs; Produced so far; then Open the report when
-one exists, Timeline, Details, and Stop swarm last.
+one exists, Record, Details, and Stop swarm last.
 
 Each agent is a face in its identity tone with its initial, two letters where
 first letters collide (Le and La). Busy faces pulse, waiting faces carry an amber
@@ -613,7 +613,7 @@ first-worked order, then runs.
 Turns use the agent's identity color, with hatching for timeouts or errors and
 open endpoints for unfinished work. Run bars use status colors.
 Marks show spawns (○), questions (?), operator posts and answers (▲), reports
-(▪), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
+(■), conclusions (●), gates opened and answered (◇ ◆), and verified runs (✓).
 Nudges, caps and retirements keep their existing marks. The legend, here and on
 the record, lists only the marks that timeline draws.
 
@@ -628,7 +628,7 @@ Timeline keeps at most 12 lanes, 400 spans and 200 marks. It keeps the operator,
 then first-worked agents, then runs; it retains the newest eligible spans and
 marks with stable timestamp sorts. Items on omitted lanes are removed.
 The title names shown/total counts for each clipped dimension, including items
-lost with omitted lanes. Timeline opens the record with additional lanes and events.
+lost with omitted lanes. Record opens the record with additional lanes and events.
 The record keeps the full retained timeline, with its own snapshot window and
 drawing. Native clipping does not remove its lanes or events.
 
@@ -668,8 +668,8 @@ Writers show worktree, branch, draft PR and observed CI, with an Open PR link.
 
 Said is this agent's recent messages only, newest first, each opening to its
 full text. Turns keeps its recorded spans newest first with HH:MM:SS times, the
-swarm's date in its heading. The quiet Its messages ·
-transcript ↗ link opens the channel, not a complete agent-only message history.
+swarm's date in its heading. The quiet Transcript ↗
+link opens the channel, not a complete agent-only message history.
 Message @agent posts as you with the roster's full handle mentioned, through
 the unchanged router. It wakes the selected agent and spends a turn; additional
 mentions in your note follow normal routing. The activity names the recipient.
@@ -829,9 +829,9 @@ An ended row opens its board in the drawer. The per-swarm board also still
 composes for MCP clients, live or ended. Live, it runs: the requests, the outcome once a
 report exists, a budget strip (turns with the same forecast delta, time, agents, fresh
 tokens with cached beside them), the same full-width Map, then Conversation
-and the eligible Message the lead composer, Timeline, Details and Stop,
+and the eligible Message the lead composer, Record, Details and Stop,
 then Spend, Produced so far and Activity. Ended, it reads like the live card: the Outcome; the shape block, with the
-crew as faces in its plan card and the meters stopped where the swarm ended;
+agent count in its plan card and the meters stopped where the swarm ended;
 Result when the swarm opened pull requests, merged work or ran workflows (Pull
 requests when eligible, Merged for a local write swarm, then Runs verified only
 when runs exist); the actions; then Agents, Spend, Produced, Activity and About
@@ -851,7 +851,7 @@ It counts distinct URLs across runs and writers, with "M with CI passing".
 A URL counts as passing only when every recorded owner explicitly reports pass.
 Run CI must also identify the same PR URL. Run verification is not a substitute
 for CI. Live boards omit the Pull requests tile.
-The actions strip is Retry or Go deeper, Timeline, Details.
+The actions strip is Retry or Go deeper, Record, Details.
 Retry and Go deeper are omitted when retained launch inputs are unavailable.
 The outcome is one card: under the report's title when the lead published one
 (else Conclusion), the conclusion with a copy button, and Open the report when
@@ -873,7 +873,7 @@ Produced so far while live, Produced once ended.
 Ended Activity shows at most the newest 12 events, with actor, time and repeats,
 and no Read the full log row. Only live Activity adds Read the full log when
 earlier events exist; it opens the record's latest 200 retained events, not the
-reading pane. Timeline reaches Activity as well as the timeline and spend.
+reading pane. Record reaches Activity as well as the timeline and spend.
 Only ended boards keep About: the task, times, health and one transcript link. About
 leaves out the cause the Outcome card already shows; Details keeps it.
 The transcript link is omitted when its address is unavailable.
@@ -908,7 +908,7 @@ placeholders use past tense. An empty chat-only swarm without workflows omits
 the section; a published report still appears. Only the operator merges pull
 requests, and the board never removes worktrees. Engine cleanup policy is unchanged.
 
-Timeline shows the swarm's record, a page the rib draws: a timeline with
+Record shows the swarm's record, a page the rib draws: a timeline with
 a lane per agent (turns as bars in the agent's color, hatched when a turn timed
 out or failed), the operator's lane above when you posted or answered and a lane per run below, with marks
 for spawns, questions to the operator, operator posts, the report, the

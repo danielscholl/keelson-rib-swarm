@@ -158,7 +158,7 @@ header { display: flex; align-items: center; gap: 14px; padding: 20px 24px 16px;
 .more:hover { color: var(--fg-strong); }
 .intro { flex: 1; min-width: 220px; }
 p { margin: 0; }
-.hint { color: var(--muted); font-size: 13px; }
+.hint { color: color-mix(in srgb, var(--fg) 60%, var(--muted)); font-size: 13px; }
 button, textarea, select, input { font: inherit; }
 button { cursor: pointer; border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; background: transparent; color: var(--fg); }
 button:hover:not(:disabled) { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
@@ -184,11 +184,11 @@ textarea::placeholder { color: var(--muted); opacity: 1; }
 .plan[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent);
   background: color-mix(in srgb, var(--accent) 6%, transparent); }
 .plan-title { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; color: var(--fg-strong); }
-.plan-blurb { display: block; margin-top: 6px; color: var(--muted); line-height: 1.5; min-height: 3em; }
+.plan-blurb { display: block; margin-top: 6px; color: color-mix(in srgb, var(--fg) 60%, var(--muted)); line-height: 1.5; min-height: 1.5em; }
 .plan-body { display: flex; flex-direction: column; align-items: stretch; gap: 14px; margin-top: auto; padding-top: 16px; }
 .figures { display: flex; gap: 22px; flex: none; }
 .figure { color: var(--muted); font-size: 12px; }
-.plan-history { display: block; color: var(--muted); font-size: 12px; margin-top: 6px; }
+.plan-history { display: block; color: color-mix(in srgb, var(--fg) 60%, var(--muted)); font-size: 12px; margin-top: 6px; }
 .figure strong { display: block; font-size: 22px; line-height: 1.25; font-weight: 600; color: var(--fg-strong);
   font-variant-numeric: tabular-nums; }
 .plan-models { min-width: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px;
@@ -990,7 +990,7 @@ export function buildLaunch(state: LaunchState, nonce: string, generation = 0): 
   const compact = `<div class="compact" id="launch-compact" data-nonce="${esc(nonce)}">
     <input id="compact-task" type="text" aria-label="Swarm task" placeholder="${esc(COMPACT_PLACEHOLDER)}">
     <button class="start" id="compact-start" type="button">Start</button>
-    <button class="more" id="compact-more" type="button" aria-expanded="false" aria-controls="launch-root">Options</button>
+    <button class="more" id="compact-more" type="button" aria-expanded="false" aria-controls="launch-root">Options<span class="chevron" aria-hidden="true">⌄</span></button>
   </div>`;
   return `<style>${designTokenCssBlock()}\n${PAGE_CSS}</style>
 <main id="launch-root" data-generation="${generation}">${state.hasSwarms ? compact : expanded}</main>

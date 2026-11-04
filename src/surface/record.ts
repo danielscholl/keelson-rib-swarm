@@ -93,7 +93,7 @@ const MARKS: Partial<Record<NonNullable<ActivityEntry["kind"]>, string>> = {
   ask: "?",
   answer: "▲",
   operator: "▲",
-  report: "▪",
+  report: "■",
   conclusion: "●",
   nudge: "◌",
   cap: "✕",
@@ -104,7 +104,7 @@ const LEGEND: readonly (readonly [string, string])[] = [
   ["○", "spawned"],
   ["?", "asked you"],
   ["▲", "you"],
-  ["▪", "report"],
+  ["■", "report"],
   ["●", "conclusion"],
   ["◇", "gate opened"],
   ["◆", "gate answered"],
@@ -176,18 +176,18 @@ svg .endrule { stroke: var(--muted); stroke-width: 1; }
 svg .lbl { font-size: 11.5px; fill: var(--fg); }
 svg .mk text { font-size: 12px; fill: var(--fg-strong); text-anchor: middle;
   paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }
-svg .mk .big { font-size: 17px; }
 svg .hatch { fill: url(#hatch); }
 svg .hatchline { stroke: var(--crit); stroke-width: 1.2; }
 svg .open { stroke: var(--fg); stroke-dasharray: 2 2; stroke-width: 1; }
 svg .edge { stroke: var(--muted); fill: none; opacity: .75; }
-svg .spawn { opacity: .75; }
+svg .spawn { opacity: .9; }
 svg .asked { stroke-dasharray: 4 3; }
 svg .arrow { fill: var(--muted); }
 svg .node { fill: var(--card); stroke-width: 1.5; }
 svg .nodet { font-size: 11.5px; text-anchor: middle; fill: var(--fg-strong); }
-svg .count { font-size: 10.5px; fill: var(--fg);
+svg .count { font-size: 11.5px; fill: var(--fg);
   paint-order: stroke; stroke: var(--card); stroke-width: 3px; stroke-linejoin: round; }
+svg .count.woken { fill: var(--muted); }
 .t-brand { fill: var(--accent); } .t-idb { fill: var(--id-blue); } .t-ida { fill: var(--id-amber); }
 .t-idt { fill: var(--id-teal); } .t-idr { fill: var(--id-rose); } .t-ido { fill: var(--id-olive); }
 .t-neu { fill: var(--muted); } .t-good { fill: var(--good); } .t-crit { fill: var(--crit); }
@@ -200,7 +200,7 @@ svg .bar { fill-opacity: .3; stroke-width: 1.2; stroke-linejoin: round; }
 .c-brand { color: var(--accent); } .c-idb { color: var(--id-blue); } .c-ida { color: var(--id-amber); }
 .c-idt { color: var(--id-teal); } .c-idr { color: var(--id-rose); } .c-ido { color: var(--id-olive); }
 .c-neu { color: var(--muted); }
-.spend + .note { margin-top: 8px; }
+.lead-note { margin: -4px 0 12px; }
 .spend { display: grid; grid-template-columns: max-content 1fr auto; gap: 8px 14px; align-items: center; }
 .spend > .mono:last-child, .spend > span:nth-child(3n) { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
 .spend > span:first-child, .spend > .mono { white-space: nowrap; }
@@ -208,7 +208,7 @@ svg .bar { fill-opacity: .3; stroke-width: 1.2; stroke-linejoin: round; }
 .who i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 7px; }
 .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--card-2); }
 .bar i { display: block; height: 100%; }
-.bar .fresh { background: currentColor; } .bar .cached { background: currentColor; opacity: .5; }
+.bar .fresh { background: currentColor; } .bar .cached { background: currentColor; opacity: .6; }
 .run { border: 1px solid var(--border); border-radius: 10px; background: var(--card-2); padding: 12px 14px; margin: 0 0 10px; }
 .run dl { display: grid; grid-template-columns: 88px 1fr; gap: 2px 10px; margin: 6px 0 0; font-size: 12.5px; }
 .run dt { color: var(--muted); } .run dd { margin: 0; overflow-wrap: anywhere; }
@@ -455,7 +455,7 @@ export function buildTimelineModel(s: SwarmSummary): {
 
 function mark(x: number, y: number, glyph: string, title: string, descriptionId?: string): string {
   if (!ok(x, y)) return "";
-  return `<text x="${num(x)}" y="${num(y)}"${glyph === "▪" ? ' class="big"' : ""}${descriptionId ? ` aria-describedby="${descriptionId}"` : ""}><title>${esc(cut(title, 40))}</title>${glyph}</text>`;
+  return `<text x="${num(x)}" y="${num(y)}"${descriptionId ? ` aria-describedby="${descriptionId}"` : ""}><title>${esc(cut(title, 40))}</title>${glyph}</text>`;
 }
 
 function timeline(s: SwarmSummary, composedAt: Date): string {
@@ -571,10 +571,9 @@ function timeline(s: SwarmSummary, composedAt: Date): string {
 
 function graphNote(graphEdges: readonly AgentEdge[]): string {
   return [
-    "Straight arrows are spawns; the count beside one is the parent's later wakes.",
-    "Curves count the turns one agent started in another, beside the arrowhead; ⇄ means the same both ways.",
+    "Straight arrows are spawns, with the parent's later wakes in grey.",
+    "Curves count turns one agent started in another, by the arrowhead; ⇄ is the same both ways.",
     ...(graphEdges.some((e) => e.kind === "asked") ? ["A dashed curve is a question to you."] : []),
-    "Kickoff and idle nudges are left out.",
   ].join(" ");
 }
 
@@ -586,7 +585,7 @@ function spawnLabel(x1: number, y1: number, x2: number, y2: number, label: strin
   const ny = (-side * (x2 - x1)) / len;
   const x = x1 + (x2 - x1) * 0.6 + nx * 11;
   const y = y1 + (y2 - y1) * 0.6 + ny * 11 + 3.5;
-  return `<text class="count" x="${num(x)}" y="${num(y)}" text-anchor="middle">${label}</text>`;
+  return `<text class="count woken" x="${num(x)}" y="${num(y)}" text-anchor="middle">${label}</text>`;
 }
 
 // ---- Who woke whom: agents as nodes, edges for spawns, wakes and questions. ----
@@ -842,7 +841,7 @@ function spend(s: SwarmSummary): string {
     const fresh = freshTokens(u);
     return `<span class="who"><i class="c-${TONE_CLASS[a.tone] ?? "neu"}"></i>@${esc(cut(shortHandle(a.handle, s.id), 14))}</span><span class="bar c-${TONE_CLASS[a.tone] ?? "neu"}"><i class="fresh" style="width:${num((100 * fresh) / most)}%"></i><i class="cached" style="width:${num((100 * u.cached) / most)}%"></i></span><span class="mono">${tokenCount(fresh)} fresh · ${tokenCount(u.cached)} cached${spendCost(agentCost(a))}</span>`;
   });
-  return `<section><h2>Tokens by agent</h2><div class="spend">${items.join("")}</div><p class="note">Bar length is fresh tokens plus cached tokens, the cached part lighter; cost is on the right.</p></section>`;
+  return `<section><h2>Tokens by agent</h2><p class="note lead-note">Bar length is fresh tokens plus cached tokens, the cached part lighter; cost is on the right.</p><div class="spend">${items.join("")}</div></section>`;
 }
 
 function runBlock(s: SwarmSummary, r: ChildRun): string {

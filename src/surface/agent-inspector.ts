@@ -220,9 +220,7 @@ export function buildAgentInspector(s: SwarmSummary, a: Agent): CanvasBoardView 
           ]
         : []),
       ...(refusal ? [{ kind: "rows" as const, items: [{ text: refusal }] }] : []),
-      ...(href
-        ? [{ kind: "rows" as const, items: [{ text: "Its messages · transcript ↗", href }] }]
-        : []),
+      ...(href ? [{ kind: "rows" as const, items: [{ text: "Transcript ↗", href }] }] : []),
       backToSwarm(s),
     ],
   };
