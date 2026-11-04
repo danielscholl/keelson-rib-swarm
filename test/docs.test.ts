@@ -51,7 +51,7 @@ describe("contributed docs", () => {
       "Fewer options",
       "Will attach issue #N from owner/repo",
       "replacement documents restore",
-      "ALSO ALLOW",
+      "Also allow",
       "Write, Run workflows and Use the tracker",
       "all off",
       "isolated: true",
@@ -253,7 +253,7 @@ describe("contributed docs", () => {
     );
     for (const text of [swarms, ...pages].map(normalize)) {
       for (const phrase of [
-        "With no project selected, the ALSO ALLOW group is absent",
+        "With no project selected, the Also allow group is absent",
         "Write",
         "Run workflows",
         "Use the tracker",

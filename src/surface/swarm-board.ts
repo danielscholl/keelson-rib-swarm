@@ -425,20 +425,24 @@ function modelLines(s: SwarmSummary): { label: string; value: string }[] {
   }
   return [
     { label: "lead", value: leadModel },
-    ...[...counts].map(([model, n]) => ({ label: "workers", value: `${model} · ${n}` })),
+    ...[...counts].map(([model, n]) => ({ label: "workers", value: `${model} × ${n}` })),
   ];
 }
 
 // An ended board has no head card, so its crew rides in the shape card.
 function shapeCard(s: SwarmSummary, crew: boolean): Card {
-  const seats = live(s)
-    ? `${s.agents.length} of ${s.limits.maxAgents} agents`
-    : plural(s.agents.length, "agent");
+  const seats = live(s) ? `${s.agents.length} of ${s.limits.maxAgents}` : String(s.agents.length);
   const people = crew ? crewPeople(s) : [];
   return {
     title: sizeWord(s),
-    stacked: true,
-    fields: [...(people.length > 0 ? [{ people }] : []), { value: seats }, ...modelLines(s)],
+    prose: true,
+    fields: [
+      ...(people.length > 0 ? [{ people }] : [{ label: "Agents", value: seats }]),
+      ...modelLines(s).map(({ label, value }) => ({
+        label: label === "lead" ? "Lead" : "Workers",
+        value,
+      })),
+    ],
   };
 }
 
@@ -598,7 +602,9 @@ function agentCard(
     ...(last
       ? [`last: ${firstLine(actorText(s.id, last.text, a.id), 40)} · ${hhmm(last.at)}`]
       : []),
-    ...(a.spawnedBy ? [`spawned by @${shortHandle(a.spawnedBy, s.id)}`] : []),
+    ...(a.spawnedBy && !s.agents.some((x) => x.lead && x.handle === a.spawnedBy)
+      ? [`spawned by @${shortHandle(a.spawnedBy, s.id)}`]
+      : []),
     ...(a.queued ? [`${plural(a.queued, "message")} waiting`] : []),
     ...(a.servedModel && a.servedModel !== a.model ? [`served by ${a.servedModel}`] : []),
   ];
@@ -611,6 +617,7 @@ function agentCard(
     ...(a.lead
       ? {}
       : { bar: { value: a.turns, total: s.limits.maxTurnsPerAgent, trailing: turns } }),
+    prose: true,
     fields: [
       { value: firstLine(a.role, 64) },
       ...(a.lead
@@ -1126,12 +1133,10 @@ function conversation(s: SwarmSummary): Leaf[] {
       items: [
         ...entries.map((m): Row => {
           const person = actorPerson(s, m.author);
-          const href = threadHref(s, m.threadRootId ?? m.id);
           return {
             ...(person ? { person } : {}),
             text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text)}`,
             trailing: hhmm(m.at),
-            ...(href ? { href } : {}),
           };
         }),
         {
@@ -1358,7 +1363,7 @@ function nativeTimeline(s: SwarmSummary, now = new Date()): CanvasTimelineSectio
     spans,
     marks,
     legend:
-      "Bars are turns in each agent's color, hatched when timed out or failed, open while unfinished. ○ spawned · ? asked you · ▲ you · ▪ report · ● conclusion · ◇ gate opened · ◆ gate answered · ✓ verified. Timeline holds the full retained record.",
+      "Bars are turns, hatched when one failed. ○ spawned · ? asked you · ▲ you · ▪ report · ● conclusion · ◇ gate · ✓ verified",
   };
 }
 
@@ -1435,11 +1440,21 @@ function conversationTab(s: SwarmSummary): Leaf[] {
 export function buildCockpit(
   s: SwarmSummary,
   needs: readonly Need[],
-  opts: { server?: ServerLine; titled: boolean; now?: Date; selectedAgentId?: string },
+  opts: {
+    server?: ServerLine;
+    titled: boolean;
+    now?: Date;
+    selectedAgentId?: string;
+    // The page already shows this swarm's requests, so the state line would repeat them.
+    asksAbove?: boolean;
+  },
 ): Section[] {
   const now = opts.now ?? new Date();
   const people = crewPeople(s);
-  const line = stateLine(s, needs, opts.server, { quiet: true });
+  const line =
+    opts.asksAbove && needs.length > 0
+      ? { text: "", warn: false }
+      : stateLine(s, needs, opts.server, { quiet: true });
   const items: Extract<Leaf, { kind: "actions" }>["items"] = [];
   if (s.report) items.push(openReport(s));
   items.push(openRecord(s), openDetails(s));

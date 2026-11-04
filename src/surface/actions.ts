@@ -765,7 +765,7 @@ export async function handleSwarmsAction(
       const found = id ? deps.find(id) : {};
       if (!id || !(found.live ?? found.ended))
         return fail(`swarm '${String(raw)}' has no record yet`);
-      deps.surface?.track([id]);
+      await deps.surface?.openRecord(id).catch(() => undefined);
       return {
         ok: true,
         data: { effect: "open-canvas", key: recordKey(id), title: `Record · ${id}` },

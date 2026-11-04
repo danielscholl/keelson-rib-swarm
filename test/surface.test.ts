@@ -2031,11 +2031,11 @@ describe("the live cockpit", () => {
         items: [
           {
             title: "Crew",
-            stacked: true,
+            prose: true,
             fields: [
-              { value: "2 of 5 agents" },
-              { label: "lead", value: "gpt-5.6-sol" },
-              { label: "workers", value: "gpt-5.6-sol · 1" },
+              { label: "Agents", value: "2 of 5" },
+              { label: "Lead", value: "gpt-5.6-sol" },
+              { label: "Workers", value: "gpt-5.6-sol × 1" },
             ],
           },
         ],
@@ -2083,10 +2083,10 @@ describe("the live cockpit", () => {
     if (shape?.kind !== "columns") throw new Error("missing shape block");
     const card = shape.columns[0]?.sections[0];
     expect(card?.kind === "cards" ? card.items[0]?.fields : []).toEqual([
-      { value: "4 of 5 agents" },
-      { label: "lead", value: "claude-opus-5-5" },
-      { label: "workers", value: "claude-sonnet-5-5 · 2" },
-      { label: "workers", value: "claude-haiku-5-5 · 1" },
+      { label: "Agents", value: "4 of 5" },
+      { label: "Lead", value: "claude-opus-5-5" },
+      { label: "Workers", value: "claude-sonnet-5-5 × 2" },
+      { label: "Workers", value: "claude-haiku-5-5 × 1" },
     ]);
     const head = cockpit[0]?.kind === "cards" ? cockpit[0].items[0] : undefined;
     expect(head?.fields?.[0]?.people?.map((p) => [p.face, p.status])).toEqual([
@@ -2199,7 +2199,7 @@ describe("the live cockpit", () => {
         { lane: s.runs![0]!.runId, at: T0, glyph: "◇", title: `approve-plan opened ${hhmm(T0)}` },
         { lane: "operator", at: T0, glyph: "▲", title: `${hhmm(T0)} you posted` },
       ],
-      legend: expect.stringContaining("Timeline holds the full retained record."),
+      legend: expect.stringContaining("○ spawned"),
     });
     const endedAt = new Date(Date.parse(T0) + 60_000).toISOString();
     expect(
@@ -2368,7 +2368,6 @@ describe("the live cockpit", () => {
               : { name: "lead", tone: "brand", face: "L" },
         text: `${m.threadRootId ? "↳ " : ""}${messageLine(s.id, m.text)}`,
         trailing: hhmm(m.at),
-        href: threadHref(s, m.threadRootId ?? m.id),
       });
     }
     expect(conversation.items.at(-1)).toEqual({
@@ -2384,7 +2383,7 @@ describe("the live cockpit", () => {
     });
     const markup = conversation.items[2]!;
     expect(markup.text).toBe("<img src=x onerror=alert(1)> [click](javascript:alert(1)) bold");
-    expect(markup.href).toBe(threadHref(s, "msg_7"));
+    expect(markup.href).toBeUndefined();
     expect(markup.action).toBeUndefined();
     const liveBoard = buildSwarmBoard(s);
     board(swarmKey(s.id), liveBoard);
@@ -2855,7 +2854,7 @@ describe("Swarms boards", () => {
         ],
       });
       const endedAgain = swarm("s1cost", { ...s, status: "done", endedAt: T0 });
-      expect(endedRow(endedAgain).trailing).toContain("2k · $20.00");
+      expect(endedRow(endedAgain).trailing).toContain("· $20.00 ·");
       expect(setupRows(endedAgain).map((r) => r.text)).toEqual([
         expect.any(String),
         expect.any(String),
@@ -2914,8 +2913,8 @@ describe("Swarms boards", () => {
           { label: "output", trailing: "$1.00 · 8%" },
         ],
       });
-      expect(endedRow(priced).trailing).toContain("4k · $13.00");
-      expect(endedRow(legacy).trailing).toContain("1k · ≈ $1.00");
+      expect(endedRow(priced).trailing).toContain("· $13.00 ·");
+      expect(endedRow(legacy).trailing).toContain("· ≈ $1.00 ·");
       const titles = buildHistory(state({ ended: [priced, legacy] }), new Date(T0)).sections.map(
         (x) => x.title,
       );
@@ -3027,7 +3026,8 @@ describe("Swarms boards", () => {
       const strip = view.sections[0];
       const items = strip?.kind === "actions" ? strip.items : [];
       const expanded = selected === fixtures.waiting!.id ? live[1]! : live[0]!;
-      expect(strip).toMatchObject({ kind: "actions", title: "Live · 2", wrap: true });
+      expect(strip).toMatchObject({ kind: "actions", wrap: true });
+      expect(strip?.title).toBeUndefined();
       expect(strip?.kind === "actions" ? strip.tabs : undefined).toBeUndefined();
       expect(items.map((x) => x.type)).toEqual(["select-swarm", "select-swarm"]);
       expect(items.filter((x) => x.selected)).toHaveLength(1);
@@ -5203,7 +5203,7 @@ describe("publishing", () => {
       const index = expectView(INDEX_KEY, "board")(sm.frames.get(INDEX_KEY)?.at(-1));
       if (index.view !== "board") throw new Error("expected board");
       const strip = leaves(index.sections).find(
-        (s) => s.kind === "actions" && s.title === "Live · 2",
+        (s) => s.kind === "actions" && s.items.some((i) => i.type === "select-swarm"),
       );
       expect(
         strip?.kind === "actions" ? strip.items.find((i) => i.selected)?.payload : undefined,
@@ -5552,7 +5552,7 @@ describe("publishing", () => {
       const view = expectView(INDEX_KEY, "board")(sm.frames.get(INDEX_KEY)?.at(-1));
       if (view.view !== "board") throw new Error("expected index board");
       const strip = leaves(view.sections).find(
-        (x) => x.kind === "actions" && x.title === "Live · 2",
+        (x) => x.kind === "actions" && x.items.some((i) => i.type === "select-swarm"),
       );
       return strip?.kind === "actions" ? strip.items.find((x) => x.selected)?.payload : undefined;
     };
@@ -6471,6 +6471,7 @@ describe("actions", () => {
       openDetails: async (...args) => {
         calls.push(["details", ...args]);
       },
+      openRecord: async () => {},
       changed: () => {},
       refresh: () => {},
       forget: () => {},
@@ -7232,6 +7233,7 @@ describe("actions", () => {
       selectAsk: async () => {},
       selectGate: async () => {},
       openDetails: async () => {},
+      openRecord: async () => {},
       select: (id) => {
         selected.push(id);
       },
@@ -8835,12 +8837,12 @@ describe("launching from the tab", () => {
       "compact-plan",
       "Crew",
       `${SIZE_PRESETS.medium.maxAgents} agents`,
-      "TASK",
-      "SIZE",
+      ">Task<",
+      ">Size<",
       "EFFORT",
       "MODEL",
-      "PROJECT",
-      "ALSO ALLOW",
+      ">Project<",
+      "Also allow",
       "<textarea",
       "<select",
       "<form",
@@ -9274,7 +9276,7 @@ describe("launching from the tab", () => {
       [{ id: "fallback", name: DEFAULT_PROJECT_NAME, rootPath: "/tmp" }],
     ]) {
       const page = buildLaunch({ projects: inventory }, "nonce");
-      for (const label of ["ALSO ALLOW", "Write", "Run workflows", "Use the tracker"]) {
+      for (const label of ["Also allow", "Write", "Run workflows", "Use the tracker"]) {
         expect(page.split("<script>")[0]).not.toContain(label);
       }
       expect(frameHarness(page).get("launch-access")!.children).toEqual([]);
@@ -12001,20 +12003,20 @@ describe("launching from the tab", () => {
       for (const copy of [
         "New swarm",
         "Agents investigate, debate, and bring back a conclusion.",
-        "TASK",
-        "SIZE",
+        ">Task<",
+        ">Size<",
         "Scout",
         "A narrow question, or a first pass before a bigger run.",
         "Crew",
         "Most tasks: investigate, debate, and decide.",
         "Fleet",
         "Wide or hard problems that are worth the spend.",
-        "LEAD MODEL",
+        ">Lead model<",
         "the plan's lead",
-        "WORKERS MODEL",
+        ">Workers model<",
         "the plan's workers",
         "Other…",
-        "PROJECT",
+        ">Project<",
         TASK_PLACEHOLDER,
         '<p class="hint project-note" id="project-note"></p>',
         '<p class="hint task-hint" id="task-hint" aria-live="polite"></p>',
@@ -12083,7 +12085,7 @@ describe("launching from the tab", () => {
         }
         expect(page).toContain("width: 44px; height: 26px");
       } else {
-        for (const name of ["ALSO ALLOW", "Write", "Run workflows", "Use the tracker"]) {
+        for (const name of ["Also allow", "Write", "Run workflows", "Use the tracker"]) {
           expect(page.split("<script>")[0]).not.toContain(name);
         }
       }

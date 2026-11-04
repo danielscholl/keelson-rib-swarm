@@ -281,7 +281,7 @@ It retains the numeric used count and existing sparkline.
 - **Conversation** shows at most eight rows, newest first. Each has the
   author's short handle in its identity color, or neutral **you** for an
   operator post; a reply starts with **↳**. Its **HH:MM** time sits at the
-  end, and the row links to its thread. The final row reads **23 messages ·
+  end. Rows are plain text. The final row reads **23 messages ·
   transcript ↗**, using the swarm's count and linking the channel.
 
 The rib keeps only the newest 20 messages, oldest first, and the first
@@ -680,7 +680,7 @@ The switch and initialization create no grants. The rib never runs `bd init`
 itself; the host-owned beads tool initializes and refreshes the tracker.
 Existing-project starts, Retry and Go deeper do not initialize a tracker.
 
-With no project selected, the **ALSO ALLOW** group is absent. Selecting an
+With no project selected, the **Also allow** group is absent. Selecting an
 existing project reveals **Write**, **Run workflows** and **Use the tracker**,
 all off.
 

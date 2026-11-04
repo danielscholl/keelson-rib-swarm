@@ -8,7 +8,7 @@
 
 import type { CanvasActionItem, CanvasBoardView, RibSurfaceBadge } from "@keelson/shared";
 import { estimated, rowCost, swarmCost } from "../cost.ts";
-import { freshTokens, modelLabel, tokenCount } from "../labels.ts";
+import { modelLabel } from "../labels.ts";
 import { NEED_ORDER, type Need, needsYou, oldestNeed, UNDATED } from "../needs.ts";
 import { type StartingSwarm, type SwarmSummary, sizeOf } from "../types.ts";
 import { dayHeading, firstLine, gist, hhmm, plural, shortHandle, span } from "./format.ts";
@@ -96,7 +96,7 @@ function needCard(s: SwarmSummary, need: Need, server?: ServerLine): Card {
     title: request.title,
     pill: request.pill,
     edge: request.pill.tone,
-    stacked: true,
+    prose: true,
     fields: [{ value: request.line }, ...sinceClock(need), ...(request.link ? [request.link] : [])],
     footnote: `${firstLine(s.task, 60)} · ${s.id}`,
     actions,
@@ -108,7 +108,7 @@ function runningCard(s: SwarmSummary, needs: readonly Need[], server?: ServerLin
     title: `${firstLine(s.task)} · ${s.id}`,
     pill: needs.length ? { label: "needs you", tone: "caution" } : livePill(s),
     bar: turnMeter(s),
-    stacked: true,
+    prose: true,
     fields: [{ value: stateLine(s, needs, server).text }, timeLeft(s), ...people(s)],
     footnote: setup(s, false),
     actions: [selectSwarm(s, "brand"), ...reportAction(s), stopAction(s)],
@@ -163,7 +163,6 @@ export function endedRow(s: SwarmSummary): Row {
     trailing: [
       plural(s.turnsUsed, "turn"),
       ...(took ? [took] : []),
-      ...(s.usage ? [tokenCount(freshTokens(s.usage))] : []),
       ...(cost ? [rowCost(cost, estimated(s))] : []),
       hhmm(s.endedAt ?? s.startedAt),
       ...(verified ? [verified] : []),
@@ -271,6 +270,8 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
           { label: "starting", n: state.starting.length, tone: "neutral" as const },
         ].filter((seg) => seg.n > 0)
       : [];
+  // One kind alone only repeats the status pill.
+  const mixed = segments.length > 1 ? segments : [];
   const empty = liveCount === 0 && ended.length === 0;
   const days = byDay(shown, now, ended);
   if (earlier > 0) {
@@ -284,7 +285,7 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
   return {
     view: "board",
     title: "Swarms",
-    ...(status ? { header: { status, ...(segments.length > 0 ? { segments } : {}) } } : {}),
+    ...(status ? { header: { status, ...(mixed.length > 0 ? { segments: mixed } : {}) } } : {}),
     sections: [
       ...(needs.length > 0
         ? [
@@ -302,7 +303,6 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
         ? [
             {
               kind: "actions" as const,
-              title: `Live · ${live.length}`,
               wrap: true,
               items: ordered.map((x) => ({
                 type: "select-swarm",
@@ -319,6 +319,7 @@ export function buildIndex(state: SurfaceState, now = new Date()): CanvasBoardVi
         ? buildCockpit(expanded.s, expanded.needs, {
             server: state.server,
             titled: live.length < 2,
+            asksAbove: true,
             now,
             selectedAgentId: state.selectedAgents?.get(expanded.s.id),
           })

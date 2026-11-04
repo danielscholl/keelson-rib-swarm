@@ -761,8 +761,8 @@ It retains the numeric used count and existing sparkline.
 
 Conversation shows the eight newest channel messages, newest first. Each row
 carries its author's short handle in an identity-colored chip (you for the
-operator), ↳ on a reply, its HH:MM time, and a link to its thread. A final count
-line links the transcript. The rib keeps only the newest 20 messages and their
+operator), ↳ on a reply, and its HH:MM time. Rows are plain text; the final
+count line links the transcript. The rib keeps only the newest 20 messages and their
 first 200 characters; the row shows the first line, at most 90 characters, as
 plain field text. Emphasis and code marks come off; HTML and markdown links stay
 literal. The status tools and the durable op record leave this recent-message
@@ -789,7 +789,8 @@ those clauses. Socket drops, channel faults, a failed lead turn and idle nudges
 append health warnings. Times are HH:MM so the line stays true between frames.
 The cockpit's state line leaves out busy and waiting agents, which its faces
 show, and the newest-activity fallback, so it appears only for requests, gates,
-the conclusion, stopping and health warnings. Folded cards keep the full line.
+the conclusion, stopping and health warnings. On the tab it also drops while the
+swarm has requests, since Needs you above names them. Folded cards keep the full line.
 
 With two or more live swarms a selection strip picks the expanded one. The
 choice is shared by every viewer. The pinned canvas contract does not allow
@@ -1032,7 +1033,7 @@ The switch and initialization create no grants. The rib never runs \`bd init\`
 itself; the host-owned beads tool initializes and refreshes the tracker.
 Existing-project starts, Retry and Go deeper do not initialize a tracker.
 
-With no project selected, the ALSO ALLOW group is absent. Selecting an existing project
+With no project selected, the Also allow group is absent. Selecting an existing project
 reveals Write, Run workflows and Use the tracker, all off. Write permits changes;
 only writers spawned by the lead receive their own worktrees and branches.
 Run workflows shows removable workflow chips: Enter or comma adds names,
