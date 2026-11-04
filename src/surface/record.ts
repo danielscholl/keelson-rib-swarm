@@ -634,7 +634,7 @@ function whoWokeWhom(s: SwarmSummary): string {
   }
   const nodes = place(s, graphEdges);
   const at = new Map(nodes.map((n) => [n.id, n]));
-  const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + 18;
+  const height = Math.max(...nodes.map((n) => n.y)) + NODE_H + 34;
   const parts: string[] = [
     `<defs><marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="arrow" d="M0 0L8 4L0 8z"/></marker></defs>`,
   ];
