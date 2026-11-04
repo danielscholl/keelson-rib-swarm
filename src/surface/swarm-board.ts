@@ -602,7 +602,11 @@ function agentCard(
   const last = [...(s.activity ?? [])].reverse().find((e) => e.actor === a.id);
   const foot = [
     ...(last
-      ? [`last: ${firstLine(actorText(s.id, last.text, a.id), 40)} · ${hhmm(last.at)}`]
+      ? [
+          /^turn \d+ /.test(last.text)
+            ? `last turn ${hhmm(last.at)}`
+            : `last: ${firstLine(actorText(s.id, last.text, a.id), 40)} · ${hhmm(last.at)}`,
+        ]
       : []),
     ...(a.spawnedBy && !s.agents.some((x) => x.lead && x.handle === a.spawnedBy)
       ? [`spawned by @${shortHandle(a.spawnedBy, s.id)}`]
@@ -1247,11 +1251,7 @@ function conclusionCard(s: SwarmSummary, conclusion: string): Card {
         copyAction: { type: "copy-conclusion", payload: { id: s.id } },
       },
     ],
-    footnote: [
-      `by @${leadHandle(s)}${when}`,
-      `${conclusion.length.toLocaleString("en-US")} characters`,
-      ...(s.report ? [reportKb(s)] : []),
-    ].join(" · "),
+    footnote: [`by @${leadHandle(s)}${when}`, ...(s.report ? [reportKb(s)] : [])].join(" · "),
     ...(s.report ? { actions: [openReport(s)] } : {}),
   };
 }

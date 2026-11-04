@@ -4469,7 +4469,7 @@ describe("the details", () => {
     expect(cards[0]).toMatchObject({
       title: "README count",
       pill: { label: "report", tone: "brand" },
-      footnote: `by @lead · ${day(T0)} ${hhmm(T0)} · 20 characters · report 3 KB`,
+      footnote: `by @lead · ${day(T0)} ${hhmm(T0)} · report 3 KB`,
     });
     expect(cards[0]?.fields).toEqual([
       {
